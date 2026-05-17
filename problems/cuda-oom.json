@@ -1,0 +1,15 @@
+{
+  "slug": "cuda-oom",
+  "title": "GPU Memory Leak in Training Loop",
+  "difficulty": "medium",
+  "category": "CUDA / GPU",
+  "tags": ["python", "pytorch", "memory-management", "debugging"],
+  "dockerImage": "leetnode-problem-cuda-oom:latest",
+  "timeLimit": 1800,
+  "description": "## The Situation\n\nYour PyTorch training job has been crashing every run. The model architecture hasn't changed, the dataset is the same — but after a few epochs the process dies with:\n\n```\nRuntimeError: CUDA out of memory. Tried to allocate 2.00 GiB\n(GPU 0; 15.00 GiB total capacity; 13.50 GiB already allocated;\n512.00 MiB free; 14.20 GiB reserved in total by PyTorch)\n```\n\n## Your Task\n\n1. Connect to the server (you already have a terminal)\n2. Examine `train.py` — find the bug causing memory to leak\n3. Fix it so the training job runs all 5 epochs successfully\n4. Click **Check Solution** to verify your fix\n\n## Useful Commands\n\n```bash\npython3 train.py          # Run the training script\nnvidia-smi                # Check GPU memory usage\ncat train.py              # View the code\nnano train.py             # Edit the code\n```",
+  "hints": [
+    "GPU memory grows when PyTorch tensors that hold computation graphs are kept alive longer than needed. Look for any data structure that accumulates tensors across iterations.",
+    "In the training loop, `loss` is a tensor with a full computation graph attached. If you store it in a list, the graph (and all the memory it references) stays allocated. What method converts a tensor to a plain Python number?",
+    "Replace `all_losses.append(loss)` with `all_losses.append(loss.item())`. The `.item()` method extracts the scalar value and detaches it from the computation graph, freeing all the intermediate tensors."
+  ]
+}
