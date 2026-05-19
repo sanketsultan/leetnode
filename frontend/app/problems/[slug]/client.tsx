@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic';
 import ProblemPanel from '../../../components/ProblemPanel';
 import ResizableSplit from '../../../components/ResizableSplit';
 import { Problem, createSession, deleteSession } from '../../../lib/api';
+import { analytics } from '../../../lib/analytics';
 
 const Terminal = dynamic(() => import('../../../components/Terminal'), { ssr: false });
 
@@ -19,8 +20,11 @@ export default function ProblemPageClient({ problem }: ProblemPageClientProps) {
   const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
+    analytics.problemViewed(problem.slug, problem.difficulty, problem.category);
+
     let cancelled = false;
     let currentSessionId: string | null = null;
+    const sessionStartedAt = Date.now();
 
     async function startSession() {
       setSessionStatus('loading');
@@ -36,10 +40,13 @@ export default function ProblemPageClient({ problem }: ProblemPageClientProps) {
         setSessionId(session.sessionId);
         setWsUrl(session.wsUrl);
         setSessionStatus('ready');
+        analytics.sessionStarted(problem.slug);
       } catch (err) {
         if (cancelled) return;
+        const msg = err instanceof Error ? err.message : 'Failed to start session';
         setSessionStatus('error');
-        setErrorMessage(err instanceof Error ? err.message : 'Failed to start session');
+        setErrorMessage(msg);
+        analytics.sessionError(problem.slug, msg);
       }
     }
 
@@ -47,6 +54,8 @@ export default function ProblemPageClient({ problem }: ProblemPageClientProps) {
 
     // Reliable cleanup when tab is closed / refreshed
     function handleUnload() {
+      const duration = Math.round((Date.now() - sessionStartedAt) / 1000);
+      analytics.sessionDuration(problem.slug, duration);
       if (currentSessionId) {
         navigator.sendBeacon(`/api/sessions/${currentSessionId}/delete`);
       }

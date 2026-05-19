@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { Problem, verifySession } from '../lib/api';
+import { analytics } from '../lib/analytics';
 
 interface ProblemPanelProps {
   problem: Problem;
@@ -28,6 +29,7 @@ export default function ProblemPanel({ problem, sessionId, sessionStatus, errorM
   const [verifyStatus, setVerifyStatus] = useState<'idle' | 'checking' | 'success' | 'failed'>('idle');
   const [verifyMessage, setVerifyMessage] = useState('');
   const [timeRemaining, setTimeRemaining] = useState(problem.timeLimit * 1000);
+  const [sessionReadyAt] = useState(() => Date.now());
 
   useEffect(() => {
     if (sessionStatus !== 'ready') return;
@@ -35,17 +37,32 @@ export default function ProblemPanel({ problem, sessionId, sessionStatus, errorM
     return () => clearInterval(t);
   }, [sessionStatus]);
 
+  function handleRevealHint() {
+    const next = hintsRevealed + 1;
+    setHintsRevealed(next);
+    analytics.hintRevealed(problem.slug, next - 1); // 0-indexed hint number
+  }
+
   async function handleVerify() {
     if (!sessionId || verifyStatus === 'checking') return;
     setVerifyStatus('checking');
     setVerifyMessage('');
+    analytics.verifyAttempted(problem.slug);
     try {
       const result = await verifySession(sessionId);
       setVerifyStatus(result.success ? 'success' : 'failed');
       setVerifyMessage(result.message);
+      const elapsed = Math.round((Date.now() - sessionReadyAt) / 1000);
+      if (result.success) {
+        analytics.verifyPassed(problem.slug, elapsed);
+      } else {
+        analytics.verifyFailed(problem.slug, result.message);
+      }
     } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Verification failed';
       setVerifyStatus('failed');
-      setVerifyMessage(err instanceof Error ? err.message : 'Verification failed');
+      setVerifyMessage(msg);
+      analytics.verifyFailed(problem.slug, msg);
     }
   }
 
@@ -169,7 +186,7 @@ export default function ProblemPanel({ problem, sessionId, sessionStatus, errorM
                 ))}
                 {hintsRevealed < problem.hints.length && (
                   <button
-                    onClick={() => setHintsRevealed(n => n + 1)}
+                    onClick={handleRevealHint}
                     className="text-xs transition-colors"
                     style={{ color: 'var(--text-faint)' }}
                     onMouseEnter={e => (e.currentTarget.style.color = 'var(--text-muted)')}

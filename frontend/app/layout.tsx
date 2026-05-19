@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import PostHogProvider from '../components/PostHogProvider';
 
 export const metadata: Metadata = {
   title: 'LeetNode — Infrastructure Debugging Practice',
@@ -35,7 +36,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </nav>
           </div>
         </header>
-        {children}
+        <PostHogProvider>{children}</PostHogProvider>
       </body>
     </html>
   );

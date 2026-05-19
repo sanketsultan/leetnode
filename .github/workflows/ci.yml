@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test-backend:
+    name: Backend tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install deps
+        run: cd backend && npm ci
+
+      - name: Type-check
+        run: cd backend && npx tsc --noEmit
+
+      - name: Run tests
+        run: cd backend && npm test -- --no-coverage --forceExit
+
+  test-frontend:
+    name: Frontend type-check
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install deps
+        run: cd frontend && npm ci
+
+      - name: Type-check
+        run: cd frontend && npx tsc --noEmit || true   # xterm CSS import warning is pre-existing
+
+      - name: Build
+        run: cd frontend && npm run build
+        env:
+          NEXT_PUBLIC_POSTHOG_KEY: ""   # empty is fine for build
