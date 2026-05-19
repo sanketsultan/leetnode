@@ -11,7 +11,7 @@ export GIT_SSH_COMMAND="ssh -i $DEPLOY_KEY -o StrictHostKeyChecking=no"
 
 echo "==> [1/8] Installing system dependencies"
 apt-get update -q
-apt-get install -y -q git nginx certbot python3-certbot-nginx curl
+apt-get install -y -q git nginx certbot python3-certbot-nginx curl build-essential python3-dev
 
 # Node.js 20
 if ! command -v node &>/dev/null; then
