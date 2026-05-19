@@ -19,17 +19,25 @@ export default function ProblemPageClient({ problem }: ProblemPageClientProps) {
   const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
+    let cancelled = false;
     let currentSessionId: string | null = null;
 
     async function startSession() {
       setSessionStatus('loading');
       try {
         const session = await createSession(problem.slug);
+        // If cleanup ran while we were awaiting (React Strict Mode double-invoke),
+        // discard this session immediately so only one container is ever active.
+        if (cancelled) {
+          deleteSession(session.sessionId).catch(() => {});
+          return;
+        }
         currentSessionId = session.sessionId;
         setSessionId(session.sessionId);
         setWsUrl(session.wsUrl);
         setSessionStatus('ready');
       } catch (err) {
+        if (cancelled) return;
         setSessionStatus('error');
         setErrorMessage(err instanceof Error ? err.message : 'Failed to start session');
       }
@@ -46,6 +54,7 @@ export default function ProblemPageClient({ problem }: ProblemPageClientProps) {
     window.addEventListener('beforeunload', handleUnload);
 
     return () => {
+      cancelled = true;
       window.removeEventListener('beforeunload', handleUnload);
       if (currentSessionId) deleteSession(currentSessionId).catch(() => {});
     };

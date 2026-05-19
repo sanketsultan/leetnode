@@ -51,6 +51,9 @@ export class PtyBridge {
   private execStream: NodeJS.ReadWriteStream | null = null;
   private execInstance: Dockerode.Exec | null = null;
   private disposed = false;
+  // Stores the last resize received before the exec stream was ready,
+  // so we can apply it immediately once the stream starts.
+  private pendingSize: { cols: number; rows: number } | null = null;
 
   constructor(containerId: string, ws: WebSocket) {
     this.containerId = containerId;
@@ -83,6 +86,13 @@ export class PtyBridge {
       }
 
       this.execStream = stream as unknown as NodeJS.ReadWriteStream;
+
+      // Apply any resize that arrived before the exec stream was ready.
+      if (this.pendingSize) {
+        const { cols, rows } = this.pendingSize;
+        this.pendingSize = null;
+        this.execInstance!.resize({ w: cols, h: rows }).catch(() => {});
+      }
 
       // Carry a dangling \x1b across chunk boundaries so that escape sequences
       // split between two Docker data events are still correctly filtered.
@@ -147,11 +157,16 @@ export class PtyBridge {
   }
 
   async resize(cols: number, rows: number): Promise<void> {
-    if (this.execInstance && !this.disposed) {
+    if (this.disposed) return;
+    // Always save the latest size — if the exec stream isn't open yet the
+    // start() callback will apply it immediately once the stream is ready.
+    this.pendingSize = { cols, rows };
+    if (this.execInstance && this.execStream) {
       try {
         await this.execInstance.resize({ w: cols, h: rows });
+        this.pendingSize = null;
       } catch {
-        // Resize can fail if exec hasn't started yet — ignore
+        // Will be applied in start() callback
       }
     }
   }
