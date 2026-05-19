@@ -40,9 +40,9 @@ function BootOverlay({ visible }: { visible: boolean }) {
         background: '#0b0b0b',
         display:    'flex',
         flexDirection: 'column',
-        justifyContent: 'center',
+        justifyContent: 'flex-start',
         alignItems: 'flex-start',
-        padding:    '0 2rem',
+        padding:    '1rem 1.5rem',
         fontFamily: '"Geist Mono","Cascadia Code","Fira Code","JetBrains Mono",Menlo,monospace',
         fontSize:   13,
         pointerEvents: 'none',
@@ -155,6 +155,11 @@ export default function TerminalComponent({ wsUrl, status, errorMessage }: Termi
     const ws   = new WebSocket(wsUrl);
     wsRef.current = ws;
 
+    // Set before calling ws.close() so onerror/onclose know it was intentional
+    // (React Strict Mode cleanup, or component unmount) and don't write
+    // spurious "Connection error" / "Disconnected" messages to the terminal.
+    let closing = false;
+
     ws.onopen = () => {
       fitAddonRef.current?.fit();
       ws.send(JSON.stringify({ type: 'resize', cols: term.cols, rows: term.rows }));
@@ -174,10 +179,14 @@ export default function TerminalComponent({ wsUrl, status, errorMessage }: Termi
     };
 
     ws.onerror = () => {
+      if (closing) return;
       setOverlayVisible(false);
       term.write('\r\n\x1b[31m  Connection error\x1b[0m\r\n');
     };
-    ws.onclose = () => term.write('\r\n\x1b[2m  Disconnected\x1b[0m\r\n');
+    ws.onclose = () => {
+      if (closing) return;
+      term.write('\r\n\x1b[2m  Disconnected\x1b[0m\r\n');
+    };
 
     const dataListener = term.onData(data => {
       if (ws.readyState === WebSocket.OPEN)
@@ -185,6 +194,7 @@ export default function TerminalComponent({ wsUrl, status, errorMessage }: Termi
     });
 
     return () => {
+      closing = true;
       dataListener.dispose();
       ws.close();
       wsRef.current = null;
