@@ -47,7 +47,7 @@ git push origin main
 
 GitHub Actions will:
 1. Run tests
-2. Build Docker images → push to Docker Hub
+2. Build Docker images → push to Docker Hub (only when docker/ files change)
 3. SSH into EC2 → pull code + images → rebuild → restart PM2
 
 ## Pipeline overview
@@ -62,8 +62,8 @@ push to main
     │
     └── Deploy (deploy.yml) — runs on push to main only
           ├── 1. Tests must pass
-          ├── 2. Build Docker images → Docker Hub
-          └── 3. SSH to EC2 → deploy
+          ├── 2. Build Docker images → Docker Hub (skipped if no docker/ changes)
+          └── 3. SSH to EC2 → pull images → rebuild app → pm2 restart
 ```
 
 ## Common commands
@@ -73,4 +73,40 @@ make ssh           # SSH into the server
 make logs          # tail PM2 logs (run on server)
 make infra-plan    # preview infrastructure changes
 make infra-apply   # apply infrastructure changes
+```
+
+## Disaster Recovery
+
+If the server dies, spin up a new one with Terraform:
+
+```bash
+# Set your values in terraform/variables.tf, then:
+make infra-destroy  # destroy old server (if still exists)
+make infra-apply    # creates new EC2 + Elastic IP
+make ip             # get new IP — update DNS A record
+```
+
+The new server auto-bootstraps via `terraform/user_data.sh`:
+- Installs all dependencies (Node 20, Docker, PM2, nginx, certbot)
+- Clones the repo using your GitHub PAT (set `github_pat` in variables.tf or as TF_VAR)
+- Pulls Docker images from Docker Hub (set `dockerhub_username` in variables.tf)
+- Builds backend + frontend
+- Configures nginx + SSL
+- Starts PM2
+
+Or run manually on any fresh Ubuntu 24.04 server:
+```bash
+sudo DOMAIN=leetnode.io \
+     DOCKERHUB_USERNAME=myuser \
+     GITHUB_PAT=ghp_xxxx \
+     bash scripts/recover.sh
+```
+
+## Terraform variables for full automation
+
+Add to `terraform/variables.tf` or pass as env vars:
+```bash
+export TF_VAR_dockerhub_username="myuser"
+export TF_VAR_github_pat="ghp_xxxx"
+export TF_VAR_domain="leetnode.io"
 ```

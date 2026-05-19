@@ -4,13 +4,13 @@ on:
   push:
     branches: [main]
 
-# Only one deploy at a time
+# Only one deploy at a time — never cancel in-progress deploys
 concurrency:
   group: deploy-production
   cancel-in-progress: false
 
 jobs:
-  # ── 1. Tests must pass before we deploy ────────────────────────────────────
+  # ── 1. Tests must pass before anything else ────────────────────────────────
   test:
     name: Tests
     runs-on: ubuntu-latest
@@ -26,35 +26,50 @@ jobs:
       - run: cd backend && npm ci
       - run: cd backend && npm test -- --no-coverage --forceExit
 
-  # ── 2. Build & push Docker problem images ──────────────────────────────────
+  # ── 2. Build & push Docker images (only when docker files change) ──────────
   docker-images:
     name: Build Docker images
     runs-on: ubuntu-latest
     needs: test
 
+    # Detect if any docker-related files changed
+    outputs:
+      changed: ${{ steps.filter.outputs.docker }}
+
     steps:
       - uses: actions/checkout@v4
 
+      - name: Check for docker file changes
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            docker:
+              - 'docker/**'
+
       - name: Log in to Docker Hub
+        if: steps.filter.outputs.docker == 'true' || github.event_name == 'workflow_dispatch'
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Set up Docker Buildx
+        if: steps.filter.outputs.docker == 'true' || github.event_name == 'workflow_dispatch'
         uses: docker/setup-buildx-action@v3
 
       - name: Build and push base image
+        if: steps.filter.outputs.docker == 'true' || github.event_name == 'workflow_dispatch'
         uses: docker/build-push-action@v5
         with:
           context: ./docker/base
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/leetnode-base:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-        continue-on-error: true   # base image may not exist yet
+          cache-from: type=gha,scope=base
+          cache-to: type=gha,scope=base,mode=max
 
       - name: Build and push problem images
+        if: steps.filter.outputs.docker == 'true' || github.event_name == 'workflow_dispatch'
         run: |
           for dir in docker/problems/*/; do
             name=$(basename "$dir")
@@ -64,9 +79,14 @@ jobs:
               --push \
               --cache-from type=gha,scope=$name \
               --cache-to   type=gha,scope=$name,mode=max \
+              --build-arg  BUILDKIT_INLINE_CACHE=1 \
               -t "$image" \
               "$dir"
           done
+
+      - name: Skip message
+        if: steps.filter.outputs.docker == 'false'
+        run: echo "No docker file changes — skipping image builds"
 
   # ── 3. Deploy to EC2 ────────────────────────────────────────────────────────
   deploy:
@@ -88,14 +108,14 @@ jobs:
             APP="/opt/leetnode"
             DH_USER="${{ secrets.DOCKERHUB_USERNAME }}"
 
-            echo "==> Pulling latest code"
+            echo "==> [deploy] Pulling latest code"
             cd "$APP"
             git fetch origin main
             git reset --hard origin/main
 
-            echo "==> Pulling latest Docker images"
-            docker pull "$DH_USER/leetnode-base:latest" 2>/dev/null || true
-            docker tag  "$DH_USER/leetnode-base:latest" leetnode-base:latest 2>/dev/null || true
+            echo "==> [deploy] Pulling Docker images from Docker Hub"
+            docker pull "$DH_USER/leetnode-base:latest" 2>/dev/null && \
+              docker tag "$DH_USER/leetnode-base:latest" leetnode-base:latest || true
 
             for dir in docker/problems/*/; do
               name=$(basename "$dir")
@@ -104,27 +124,30 @@ jobs:
               docker pull "$src" && docker tag "$src" "$dst" || true
             done
 
-            echo "==> Building backend"
+            echo "==> [deploy] Building backend"
             cd "$APP/backend"
             npm ci --prefer-offline
             npm run build
 
-            echo "==> Building frontend"
+            echo "==> [deploy] Building frontend"
             cd "$APP/frontend"
             NEXT_PUBLIC_POSTHOG_KEY="${{ secrets.POSTHOG_KEY }}" \
             NEXT_PUBLIC_POSTHOG_HOST="https://us.i.posthog.com" \
             npm run build
 
-            echo "==> Restarting services"
+            echo "==> [deploy] Restarting PM2"
             cd "$APP"
-            pm2 restart all
+            pm2 restart all --update-env
 
-            echo "==> Done at $(date)"
+            echo "==> [deploy] Done at $(date)"
+            pm2 status
 
       - name: Notify success
         if: success()
-        run: echo "Deployed successfully to https://${{ secrets.DOMAIN }}"
+        run: echo "✓ Deployed to https://${{ secrets.DOMAIN }}"
 
       - name: Notify failure
         if: failure()
-        run: echo "Deploy failed — check logs above"
+        run: |
+          echo "✗ Deploy failed — check the SSH step above"
+          exit 1

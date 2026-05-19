@@ -28,5 +28,9 @@ COPY nvidia-smi /usr/local/bin/nvidia-smi
 COPY nvcc /usr/local/bin/nvcc
 RUN chmod +x /usr/local/bin/nvidia-smi /usr/local/bin/nvcc
 
+# Install PyTorch CPU-only (problems use mock GPU via nvidia-smi/nvcc)
+# Shared here so all problem images inherit the layer instead of each downloading 8GB
+RUN pip3 install --no-cache-dir torch==2.5.1 --index-url https://download.pytorch.org/whl/cpu
+
 WORKDIR /home/user
 USER user

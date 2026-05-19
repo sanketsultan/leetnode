@@ -1,17 +1,22 @@
 #!/bin/bash
 # deploy.sh — run on the VPS to install or update LeetNode
-# Usage: bash scripts/deploy.sh
+# Works for both fresh installs and updates.
+# Usage:
+#   DOMAIN=leetnode.io DOCKERHUB_USERNAME=myuser bash scripts/deploy.sh
 set -e
 
 DOMAIN="${DOMAIN:-yourdomain.com}"
 REPO="${REPO:-git@github.com:sanketsultan/leetnode.git}"
 APP_DIR="/opt/leetnode"
 DEPLOY_KEY="${DEPLOY_KEY:-/home/ubuntu/.ssh/leetnode_deploy}"
+DH_USER="${DOCKERHUB_USERNAME:-}"
 export GIT_SSH_COMMAND="ssh -i $DEPLOY_KEY -o StrictHostKeyChecking=no"
 
 echo "==> [1/8] Installing system dependencies"
 apt-get update -q
-apt-get install -y -q git nginx certbot python3-certbot-nginx curl build-essential python3-dev
+apt-get install -y -q \
+  git nginx certbot python3-certbot-nginx curl \
+  build-essential python3-dev
 
 # Node.js 20
 if ! command -v node &>/dev/null; then
@@ -33,7 +38,8 @@ fi
 
 echo "==> [2/8] Cloning / updating repo"
 if [ -d "$APP_DIR/.git" ]; then
-  git -C "$APP_DIR" pull
+  git -C "$APP_DIR" fetch origin main
+  git -C "$APP_DIR" reset --hard origin/main
 else
   git clone "$REPO" "$APP_DIR"
 fi
@@ -53,15 +59,32 @@ npm ci --prefer-offline
 npm run build
 cd ..
 
-echo "==> [5/8] Pre-pulling problem Docker images"
-# Pull images so the first session doesn't have to wait for a download
+echo "==> [5/8] Pulling / building Docker images"
+if [ -n "$DH_USER" ]; then
+  echo "   Pulling from Docker Hub ($DH_USER)"
+
+  docker pull "$DH_USER/leetnode-base:latest" 2>/dev/null && \
+    docker tag "$DH_USER/leetnode-base:latest" leetnode-base:latest || true
+
+  for dir in docker/problems/*/; do
+    name=$(basename "$dir")
+    src="$DH_USER/leetnode-problem-$name:latest"
+    dst="leetnode-problem-$name:latest"
+    docker pull "$src" && docker tag "$src" "$dst" || true
+  done
+fi
+
+# Build any image that didn't pull
+if ! docker image inspect leetnode-base:latest &>/dev/null; then
+  docker build -t leetnode-base:latest docker/base/
+fi
 for dir in docker/problems/*/; do
-  image=$(basename "$dir")
-  full="leetnode-problem-${image}:latest"
-  echo "   Pulling $full ..."
-  docker pull "$full" 2>/dev/null || docker build -t "$full" "$dir" || true
+  name=$(basename "$dir")
+  if ! docker image inspect "leetnode-problem-$name:latest" &>/dev/null; then
+    echo "   Building $name locally"
+    docker build -t "leetnode-problem-$name:latest" "$dir" || true
+  fi
 done
-docker pull leetnode-base:latest 2>/dev/null || true
 
 echo "==> [6/8] Configuring nginx"
 cp nginx/leetnode.conf /etc/nginx/sites-available/leetnode
@@ -73,18 +96,15 @@ systemctl reload nginx
 
 echo "==> [7/8] SSL certificate (certbot)"
 certbot --nginx -d "$DOMAIN" --non-interactive --agree-tos -m "admin@$DOMAIN" || \
-  echo "  Skipping — certbot failed (run manually: certbot --nginx -d $DOMAIN)"
+  echo "  Skipping — run manually: sudo certbot --nginx -d $DOMAIN"
 
 echo "==> [8/8] Starting with PM2"
-# Update domain in ecosystem config
 sed -i "s/yourdomain.com/$DOMAIN/g" ecosystem.config.js
-
 pm2 delete all 2>/dev/null || true
 pm2 start ecosystem.config.js
 pm2 save
-pm2 startup systemd -u root --hp /root | tail -1 | bash || true
+env PATH="$PATH:/usr/bin" pm2 startup systemd -u ubuntu --hp /home/ubuntu | tail -1 | bash || true
 
 echo ""
 echo "Done! LeetNode is running at https://$DOMAIN"
-echo "Logs: pm2 logs"
-echo "Status: pm2 status"
+echo "Logs: pm2 logs | Status: pm2 status"

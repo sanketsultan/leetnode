@@ -142,9 +142,11 @@ resource "aws_instance" "leetnode" {
   }
 
   user_data = templatefile("${path.module}/user_data.sh", {
-    github_repo = var.github_repo
-    domain      = var.domain
-    alert_email = var.alert_email
+    github_repo        = var.github_repo
+    domain             = var.domain
+    alert_email        = var.alert_email
+    dockerhub_username = var.dockerhub_username
+    github_pat         = var.github_pat
   })
 
   tags = { Name = "leetnode" }

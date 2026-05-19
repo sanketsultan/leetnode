@@ -33,3 +33,16 @@ variable "alert_email" {
   type        = string
   default     = "admin@leetnode.io"
 }
+
+variable "dockerhub_username" {
+  description = "Docker Hub username — images are pulled from here on bootstrap"
+  type        = string
+  default     = ""
+}
+
+variable "github_pat" {
+  description = "GitHub Personal Access Token (read:repo) for cloning private repo on bootstrap"
+  type        = string
+  default     = ""
+  sensitive   = true
+}

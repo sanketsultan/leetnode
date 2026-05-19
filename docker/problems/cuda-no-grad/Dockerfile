@@ -2,8 +2,7 @@ FROM leetnode-base:latest
 
 USER root
 
-# Install PyTorch (ARM64-compatible version from PyPI)
-RUN pip3 install --no-cache-dir torch==2.5.1
+# PyTorch is pre-installed in leetnode-base — no need to reinstall here
 
 # Copy and run setup script to create the broken environment
 COPY setup.sh /tmp/setup.sh
