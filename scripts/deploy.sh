@@ -4,8 +4,10 @@
 set -e
 
 DOMAIN="${DOMAIN:-yourdomain.com}"
-REPO="${REPO:-https://github.com/youruser/leetnode.git}"
+REPO="${REPO:-git@github.com:sanketsultan/leetnode.git}"
 APP_DIR="/opt/leetnode"
+DEPLOY_KEY="${DEPLOY_KEY:-/home/ubuntu/.ssh/leetnode_deploy}"
+export GIT_SSH_COMMAND="ssh -i $DEPLOY_KEY -o StrictHostKeyChecking=no"
 
 echo "==> [1/8] Installing system dependencies"
 apt-get update -q
@@ -35,6 +37,7 @@ if [ -d "$APP_DIR/.git" ]; then
 else
   git clone "$REPO" "$APP_DIR"
 fi
+chown -R ubuntu:ubuntu "$APP_DIR"
 cd "$APP_DIR"
 mkdir -p logs
 
