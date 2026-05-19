@@ -123,8 +123,9 @@ jobs:
 
             echo "==> Pulling latest code"
             cd "$APP"
-            git remote set-url origin https://${{ secrets.GH_PAT }}@github.com/sanketsultan/leetnode.git
-            git fetch origin
+            git -c credential.helper='' \
+                -c http.extraheader="Authorization: Basic $(echo -n 'x:${{ secrets.GH_PAT }}' | base64)" \
+                fetch origin
             git reset --hard origin/$(git rev-parse --abbrev-ref HEAD)
 
             echo "==> Pulling Docker images from Hub"
