@@ -61,16 +61,11 @@ export default function ResizableSplit({
       {/* Drag handle */}
       <div
         onMouseDown={onMouseDown}
-        className="w-1 flex-shrink-0 bg-slate-800 hover:bg-blue-500 active:bg-blue-400 cursor-col-resize transition-colors relative group"
-        title="Drag to resize"
-      >
-        {/* Visual grip dots */}
-        <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 flex flex-col items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-          {[...Array(5)].map((_, i) => (
-            <div key={i} className="w-0.5 h-0.5 rounded-full bg-white/60" />
-          ))}
-        </div>
-      </div>
+        className="w-px flex-shrink-0 cursor-col-resize transition-colors group relative"
+        style={{ background: 'var(--border)' }}
+        onMouseEnter={e => (e.currentTarget.style.background = '#3b82f6')}
+        onMouseLeave={e => (e.currentTarget.style.background = 'var(--border)')}
+      />
 
       {/* Right panel */}
       <div className="flex-1 min-w-0 overflow-hidden flex flex-col">

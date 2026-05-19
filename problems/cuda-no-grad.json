@@ -1,0 +1,15 @@
+{
+  "slug": "cuda-no-grad",
+  "title": "Missing no_grad During Inference",
+  "difficulty": "easy",
+  "category": "CUDA / GPU",
+  "tags": ["python", "pytorch", "memory-management", "inference"],
+  "dockerImage": "leetnode-problem-cuda-no-grad:latest",
+  "timeLimit": 900,
+  "description": "## The Situation\n\nYour embedding generation job crashes after processing about 200 batches:\n\n```\nRuntimeError: CUDA out of memory.\nTry using torch.no_grad() during inference.\n```\n\nThe model itself fits in VRAM with room to spare. But memory keeps climbing with every single batch, even though you are not training — no `loss.backward()`, no optimizer step. Something is keeping tensors alive.\n\n## Your Task\n\n1. Connect to the server (you already have a terminal)\n2. Read `embed.py` — understand why memory grows during a plain forward pass\n3. Add the fix that stops PyTorch from building computation graphs during inference\n4. Click **Check Solution** to verify your fix\n\n## Useful Commands\n\n```bash\npython3 embed.py      # run the script (crashes without fix)\ncat embed.py          # view the code\nnano embed.py         # edit the code\nnvidia-smi            # watch GPU memory\n```",
+  "hints": [
+    "During training, PyTorch builds a computation graph for every forward pass so it can calculate gradients later. During inference you never call .backward(), so this graph is wasted memory that just accumulates.",
+    "PyTorch has a context manager specifically for inference that disables gradient tracking for everything inside it. When active, no computation graphs are built and memory stays flat across batches.",
+    "Wrap the model forward call inside the loop with `with torch.no_grad():`. This one addition stops the graph from being built on each iteration."
+  ]
+}

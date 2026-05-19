@@ -7,8 +7,15 @@ const sessions = new Map<string, Session>();
 const cleanupTimers = new Map<string, NodeJS.Timeout>();
 
 export async function createSession(problem: Problem): Promise<Session> {
+  // If at capacity, evict the oldest session to make room
   if (sessions.size >= config.MAX_SESSIONS) {
-    throw new Error(`Maximum concurrent sessions (${config.MAX_SESSIONS}) reached. Try again later.`);
+    const oldest = Array.from(sessions.values()).sort(
+      (a, b) => a.createdAt.getTime() - b.createdAt.getTime()
+    )[0];
+    if (oldest) {
+      console.log(`[Session] At capacity (${config.MAX_SESSIONS}), evicting oldest session ${oldest.id}`);
+      await expireSession(oldest.id);
+    }
   }
 
   const sessionId = uuidv4();

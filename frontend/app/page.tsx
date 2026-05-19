@@ -1,10 +1,9 @@
 import { getProblems, Problem } from '../lib/api';
-import { Terminal, ChevronRight } from 'lucide-react';
 
-const difficultyColors: Record<string, string> = {
-  easy: 'text-green-400 bg-green-400/10',
-  medium: 'text-yellow-400 bg-yellow-400/10',
-  hard: 'text-red-400 bg-red-400/10',
+const difficultyColor: Record<string, string> = {
+  easy:   '#22c55e',
+  medium: '#f59e0b',
+  hard:   '#ef4444',
 };
 
 export default async function HomePage() {
@@ -12,59 +11,101 @@ export default async function HomePage() {
   try {
     problems = await getProblems();
   } catch {
-    // Backend not running yet
+    // backend offline
   }
 
   return (
-    <main className="max-w-5xl mx-auto px-4 py-12">
-      <div className="mb-10">
-        <h1 className="text-4xl font-bold text-white mb-3">
-          Practice Infrastructure Debugging
+    <main className="max-w-6xl mx-auto px-6 py-16">
+      {/* Hero */}
+      <div className="mb-12">
+        <h1 className="text-2xl font-semibold tracking-tight mb-3" style={{ color: 'var(--text)' }}>
+          Infrastructure Debugging Practice
         </h1>
-        <p className="text-slate-400 text-lg">
-          Real terminal access to broken environments. Debug GPU failures, Kubernetes issues, and more.
+        <p className="text-sm leading-relaxed max-w-lg" style={{ color: 'var(--text-muted)' }}>
+          Real terminal access to broken environments. Debug GPU failures, Kubernetes issues,
+          and infrastructure problems — directly in your browser.
         </p>
       </div>
 
+      {/* Stats row */}
+      <div className="flex items-center gap-6 mb-10 pb-10" style={{ borderBottom: '1px solid var(--border)' }}>
+        {[
+          { label: 'Problems', value: problems.length || '—' },
+          { label: 'Categories', value: problems.length ? new Set(problems.map(p => p.category)).size : '—' },
+          { label: 'Runtime', value: 'Docker' },
+        ].map(({ label, value }) => (
+          <div key={label}>
+            <div className="text-xl font-semibold font-mono" style={{ color: 'var(--text)' }}>{value}</div>
+            <div className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>{label}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Problem list */}
       {problems.length === 0 ? (
-        <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-12 text-center">
-          <Terminal className="w-12 h-12 text-slate-600 mx-auto mb-4" />
-          <p className="text-slate-500">Backend not running or no problems loaded yet.</p>
-          <p className="text-slate-600 text-sm mt-2">Start the backend with <code className="bg-slate-800 px-2 py-0.5 rounded">npm run dev</code></p>
+        <div className="py-20 text-center">
+          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+            Backend not running.
+          </p>
+          <p className="text-xs mt-1 font-mono" style={{ color: 'var(--text-faint)' }}>
+            cd backend && npm run dev
+          </p>
         </div>
       ) : (
-        <div className="grid gap-4">
-          {problems.map((problem) => (
-            <a
-              key={problem.slug}
-              href={`/problems/${problem.slug}`}
-              className="group block rounded-xl border border-slate-800 bg-slate-900/50 hover:border-slate-600 hover:bg-slate-900 transition-all p-6"
-            >
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    <span className={`text-xs font-medium px-2 py-1 rounded-full ${difficultyColors[problem.difficulty] || 'text-slate-400'}`}>
-                      {problem.difficulty}
-                    </span>
-                    <span className="text-xs text-slate-500 bg-slate-800 px-2 py-1 rounded-full">
-                      {problem.category}
-                    </span>
-                  </div>
-                  <h2 className="text-lg font-semibold text-white group-hover:text-blue-400 transition-colors">
+        <div>
+          {/* Table header */}
+          <div className="grid grid-cols-12 gap-4 px-4 pb-3 text-xs font-medium uppercase tracking-wider"
+            style={{ color: 'var(--text-faint)' }}>
+            <div className="col-span-1">#</div>
+            <div className="col-span-5">Title</div>
+            <div className="col-span-2">Difficulty</div>
+            <div className="col-span-3">Category</div>
+            <div className="col-span-1">Time</div>
+          </div>
+
+          <div style={{ borderTop: '1px solid var(--border)' }}>
+            {problems.map((problem, i) => (
+              <a
+                key={problem.slug}
+                href={`/problems/${problem.slug}`}
+                className="problem-row"
+              >
+                <div className="col-span-1 text-sm font-mono" style={{ color: 'var(--text-faint)' }}>
+                  {String(i + 1).padStart(2, '0')}
+                </div>
+                <div className="col-span-5">
+                  <span className="problem-title text-sm font-medium transition-colors"
+                    style={{ color: 'var(--text)' }}>
                     {problem.title}
-                  </h2>
-                  <div className="flex gap-2 mt-3 flex-wrap">
-                    {problem.tags.map((tag) => (
-                      <span key={tag} className="text-xs text-slate-500 bg-slate-800/60 px-2 py-0.5 rounded">
+                  </span>
+                  <div className="flex gap-1.5 mt-1.5">
+                    {problem.tags.map(tag => (
+                      <span key={tag} className="text-xs font-mono px-1.5 py-0.5 rounded"
+                        style={{ background: 'var(--border)', color: 'var(--text-muted)' }}>
                         {tag}
                       </span>
                     ))}
                   </div>
                 </div>
-                <ChevronRight className="w-5 h-5 text-slate-600 group-hover:text-slate-400 transition-colors flex-shrink-0 mt-1" />
-              </div>
-            </a>
-          ))}
+                <div className="col-span-2 flex items-start pt-0.5">
+                  <span className="text-xs font-medium capitalize"
+                    style={{ color: difficultyColor[problem.difficulty] ?? 'var(--text-muted)' }}>
+                    {problem.difficulty}
+                  </span>
+                </div>
+                <div className="col-span-3 flex items-start pt-0.5">
+                  <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                    {problem.category}
+                  </span>
+                </div>
+                <div className="col-span-1 flex items-start pt-0.5">
+                  <span className="text-xs font-mono" style={{ color: 'var(--text-faint)' }}>
+                    {Math.floor(problem.timeLimit / 60)}m
+                  </span>
+                </div>
+              </a>
+            ))}
+          </div>
         </div>
       )}
     </main>

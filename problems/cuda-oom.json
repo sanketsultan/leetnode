@@ -10,6 +10,6 @@
   "hints": [
     "GPU memory grows when PyTorch tensors that hold computation graphs are kept alive longer than needed. Look for any data structure that accumulates tensors across iterations.",
     "In the training loop, `loss` is a tensor with a full computation graph attached. If you store it in a list, the graph (and all the memory it references) stays allocated. What method converts a tensor to a plain Python number?",
-    "Replace `all_losses.append(loss)` with `all_losses.append(loss.item())`. The `.item()` method extracts the scalar value and detaches it from the computation graph, freeing all the intermediate tensors."
+    "PyTorch tensors have a method that extracts the scalar value as a plain Python float, breaking the link to the computation graph. Look it up in the PyTorch docs — it's one of the most commonly used tensor methods in training loops."
   ]
 }

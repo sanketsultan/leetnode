@@ -13,8 +13,8 @@ RUN chmod +x /tmp/setup.sh && bash /tmp/setup.sh && rm /tmp/setup.sh
 COPY verify.sh /root/verify.sh
 RUN chmod +x /root/verify.sh
 
-LABEL com.leetnode.problem="cuda-oom"
-LABEL com.leetnode.title="GPU Memory Leak in Training Loop"
+LABEL com.leetnode.problem="cuda-tensor-device"
+LABEL com.leetnode.title="Tensor Not Moved to GPU"
 
 WORKDIR /home/user
 USER user

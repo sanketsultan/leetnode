@@ -1,0 +1,15 @@
+{
+  "slug": "cuda-tensor-device",
+  "title": "Tensor Not Moved to GPU",
+  "difficulty": "easy",
+  "category": "CUDA / GPU",
+  "tags": ["python", "pytorch", "cuda", "device"],
+  "dockerImage": "leetnode-problem-cuda-tensor-device:latest",
+  "timeLimit": 900,
+  "description": "## The Situation\n\nYour feature extraction script runs perfectly on your laptop, but the moment it hits the GPU server it dies:\n\n```\nRuntimeError: Expected all tensors to be on the same device,\nbut found at least two devices, cuda:0 and cpu!\n```\n\nThe model loads. The data loads. Nothing looks obviously wrong. But something is on the wrong device.\n\n## Your Task\n\n1. Connect to the server (you already have a terminal)\n2. Read `infer.py` — find the tensor that is not on the correct device\n3. Fix it so the script runs without errors\n4. Click **Check Solution** to verify your fix\n\n## Useful Commands\n\n```bash\npython3 infer.py      # run the script\ncat infer.py          # view the code\nnano infer.py         # edit the code\nnvidia-smi            # check GPU\n```",
+  "hints": [
+    "In PyTorch, every tensor has a device (cpu, cuda:0, etc.). When you call model(x), the model and all its inputs must be on the same device.",
+    "DataLoaders return CPU tensors by default. The pattern is: create your tensor, then move it with .to(device) before passing it to the model. Look for tensors that are created but never moved.",
+    "There is one tensor in infer.py that is created but never has .to(device) called on it. Find the line where it is created and chain .to(device) onto it, or pass device= as a keyword argument."
+  ]
+}

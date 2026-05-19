@@ -98,6 +98,14 @@ router.delete('/:sessionId', async (req: Request, res: Response) => {
   res.status(204).send();
 });
 
+// POST /api/sessions/:sessionId/delete — sendBeacon fallback (can only POST)
+router.post('/:sessionId/delete', async (req: Request, res: Response) => {
+  const sessionId = req.params['sessionId'] as string;
+  const session = getSession(sessionId);
+  if (session) await expireSession(sessionId);
+  res.status(204).send();
+});
+
 // GET /api/sessions (admin/debug)
 router.get('/', (_req: Request, res: Response) => {
   const sessions = getAllSessions().map((s) => ({
