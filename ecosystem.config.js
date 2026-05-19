@@ -15,8 +15,8 @@ module.exports = {
         PORT: 3001,
         WS_PORT: 3002,
         // Update these for your domain:
-        FRONTEND_URL: 'https://yourdomain.com',
-        WS_PUBLIC_URL: 'wss://yourdomain.com/ws',
+        FRONTEND_URL: 'https://leetnode.io',
+        WS_PUBLIC_URL: 'wss://leetnode.io/ws',
         SESSION_TTL_MS: 1800000,   // 30 min
         MAX_SESSIONS: 20,
         DOCKER_SOCKET: '/var/run/docker.sock',
