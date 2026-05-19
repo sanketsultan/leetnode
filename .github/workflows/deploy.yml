@@ -5,13 +5,12 @@ on:
     branches: [main, master]
   workflow_dispatch:
 
-# Only one deploy at a time — never cancel in-progress deploys
 concurrency:
   group: deploy-production
   cancel-in-progress: false
 
 jobs:
-  # ── 1. Tests must pass before anything else ────────────────────────────────
+  # ── 1. Tests must pass ─────────────────────────────────────────────────────
   test:
     name: Tests
     runs-on: ubuntu-latest
@@ -27,20 +26,49 @@ jobs:
       - run: cd backend && npm ci
       - run: cd backend && npm test -- --no-coverage --forceExit
 
-  # ── 2. Build & push Docker images (only when docker files change) ──────────
-  docker-images:
-    name: Build Docker images
+  # ── 2. Build & push all images ─────────────────────────────────────────────
+  build-images:
+    name: Build & push images
     runs-on: ubuntu-latest
     needs: test
-
-    # Detect if any docker-related files changed
-    outputs:
-      changed: ${{ steps.filter.outputs.docker }}
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Check for docker file changes
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Backend
+      - name: Build and push backend
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/leetnode-backend:latest
+          cache-from: type=gha,scope=backend
+          cache-to: type=gha,scope=backend,mode=max
+
+      # Frontend — NEXT_PUBLIC_ vars baked in at build time
+      - name: Build and push frontend
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/leetnode-frontend:latest
+          build-args: |
+            NEXT_PUBLIC_POSTHOG_KEY=${{ secrets.POSTHOG_KEY }}
+            NEXT_PUBLIC_POSTHOG_HOST=https://eu.i.posthog.com
+          cache-from: type=gha,scope=frontend
+          cache-to: type=gha,scope=frontend,mode=max
+
+      # Problem Docker images (only when docker/ files change)
+      - name: Check for docker/ changes
         id: filter
         uses: dorny/paths-filter@v3
         with:
@@ -48,19 +76,8 @@ jobs:
             docker:
               - 'docker/**'
 
-      - name: Log in to Docker Hub
-        if: steps.filter.outputs.docker == 'true' || github.event_name == 'workflow_dispatch'
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Set up Docker Buildx
-        if: steps.filter.outputs.docker == 'true' || github.event_name == 'workflow_dispatch'
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build and push base image
-        if: steps.filter.outputs.docker == 'true' || github.event_name == 'workflow_dispatch'
+      - name: Build and push base problem image
+        if: steps.filter.outputs.docker == 'true'
         uses: docker/build-push-action@v5
         with:
           context: ./docker/base
@@ -70,7 +87,7 @@ jobs:
           cache-to: type=gha,scope=base,mode=max
 
       - name: Build and push problem images
-        if: steps.filter.outputs.docker == 'true' || github.event_name == 'workflow_dispatch'
+        if: steps.filter.outputs.docker == 'true'
         run: |
           for dir in docker/problems/*/; do
             name=$(basename "$dir")
@@ -80,20 +97,15 @@ jobs:
               --push \
               --cache-from type=gha,scope=$name \
               --cache-to   type=gha,scope=$name,mode=max \
-              --build-arg  BUILDKIT_INLINE_CACHE=1 \
               -t "$image" \
               "$dir"
           done
 
-      - name: Skip message
-        if: steps.filter.outputs.docker == 'false'
-        run: echo "No docker file changes — skipping image builds"
-
-  # ── 3. Deploy to EC2 ────────────────────────────────────────────────────────
+  # ── 3. Deploy to EC2 ───────────────────────────────────────────────────────
   deploy:
     name: Deploy to production
     runs-on: ubuntu-latest
-    needs: [test, docker-images]
+    needs: build-images
 
     steps:
       - uses: actions/checkout@v4
@@ -109,46 +121,32 @@ jobs:
             APP="/opt/leetnode"
             DH_USER="${{ secrets.DOCKERHUB_USERNAME }}"
 
-            echo "==> [deploy] Pulling latest code"
+            echo "==> Pulling latest code"
             cd "$APP"
-            git fetch origin main
-            git reset --hard origin/main
+            git fetch origin
+            git reset --hard origin/$(git rev-parse --abbrev-ref HEAD)
 
-            echo "==> [deploy] Pulling Docker images from Docker Hub"
+            echo "==> Pulling Docker images from Hub"
+            docker pull "$DH_USER/leetnode-backend:latest"
+            docker pull "$DH_USER/leetnode-frontend:latest"
             docker pull "$DH_USER/leetnode-base:latest" 2>/dev/null && \
               docker tag "$DH_USER/leetnode-base:latest" leetnode-base:latest || true
-
             for dir in docker/problems/*/; do
               name=$(basename "$dir")
               src="$DH_USER/leetnode-problem-$name:latest"
-              dst="leetnode-problem-$name:latest"
-              docker pull "$src" && docker tag "$src" "$dst" || true
+              docker pull "$src" && docker tag "$src" "leetnode-problem-$name:latest" || true
             done
 
-            echo "==> [deploy] Building backend"
-            cd "$APP/backend"
-            npm ci --prefer-offline
-            npm run build
+            echo "==> Restarting with Docker Compose"
+            docker compose up -d --pull never
 
-            echo "==> [deploy] Building frontend"
-            cd "$APP/frontend"
-            NEXT_PUBLIC_POSTHOG_KEY="${{ secrets.POSTHOG_KEY }}" \
-            NEXT_PUBLIC_POSTHOG_HOST="https://us.i.posthog.com" \
-            npm run build
-
-            echo "==> [deploy] Restarting PM2"
-            cd "$APP"
-            pm2 restart all --update-env
-
-            echo "==> [deploy] Done at $(date)"
-            pm2 status
+            echo "==> Done at $(date)"
+            docker compose ps
 
       - name: Notify success
         if: success()
-        run: echo "✓ Deployed to https://${{ secrets.DOMAIN }}"
+        run: echo "Deployed to https://${{ secrets.DOMAIN }}"
 
       - name: Notify failure
         if: failure()
-        run: |
-          echo "✗ Deploy failed — check the SSH step above"
-          exit 1
+        run: exit 1

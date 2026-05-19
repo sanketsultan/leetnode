@@ -1,29 +1,35 @@
-version: '3.8'
-
 services:
+
   backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile.dev
-    ports:
-      - "3001:3001"
-      - "3002:3002"
+    image: ${DOCKERHUB_USERNAME}/leetnode-backend:latest
+    restart: unless-stopped
     volumes:
-      - ./backend/src:/app/src
-      - ./problems:/problems
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
-      - PORT=3001
-      - WS_PORT=3002
-      - FRONTEND_URL=http://localhost:3000
-      - WS_PUBLIC_URL=ws://localhost:3002
-      - PROBLEMS_DIR=/problems
-    depends_on: []
+      NODE_ENV: production
+      PORT: "3001"
+      WS_PORT: "3002"
+      WS_PUBLIC_URL: wss://${DOMAIN}/ws
+      FRONTEND_URL: https://${DOMAIN}
+      SESSION_TTL_MS: "1800000"
+      MAX_SESSIONS: "20"
+      DOCKER_SOCKET: /var/run/docker.sock
 
   frontend:
-    build:
-      context: ./frontend
-    ports:
-      - "3000:3000"
+    image: ${DOCKERHUB_USERNAME}/leetnode-frontend:latest
+    restart: unless-stopped
     environment:
-      - NEXT_PUBLIC_API_URL=http://localhost:3001
+      NODE_ENV: production
+      PORT: "3000"
+      BACKEND_URL: http://backend:3001
+
+  nginx:
+    image: nginx:alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/docker.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - backend
+      - frontend

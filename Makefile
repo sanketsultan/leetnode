@@ -1,4 +1,5 @@
-.PHONY: infra-init infra-plan infra-apply infra-destroy deploy logs ssh
+.PHONY: infra-init infra-plan infra-apply infra-destroy ip ssh \
+        up down logs ps restart dev-backend dev-frontend test
 
 # ── Terraform ────────────────────────────────────────────────────────────────
 
@@ -14,15 +15,30 @@ infra-apply:
 infra-destroy:
 	cd terraform && terraform destroy
 
-# ── After terraform apply, print the IP to add to your DNS ──────────────────
-
 ip:
 	cd terraform && terraform output public_ip
 
 ssh:
 	ssh ubuntu@$$(cd terraform && terraform output -raw public_ip)
 
-# ── Local dev ────────────────────────────────────────────────────────────────
+# ── Production (Docker Compose on server) ────────────────────────────────────
+
+up:
+	docker compose up -d
+
+down:
+	docker compose down
+
+logs:
+	docker compose logs -f
+
+ps:
+	docker compose ps
+
+restart:
+	docker compose restart
+
+# ── Local dev (without Docker) ───────────────────────────────────────────────
 
 dev-backend:
 	cd backend && npm run dev
@@ -32,11 +48,3 @@ dev-frontend:
 
 test:
 	cd backend && npm test -- --no-coverage --forceExit
-
-# ── PM2 helpers (run on server) ──────────────────────────────────────────────
-
-logs:
-	pm2 logs
-
-status:
-	pm2 status
