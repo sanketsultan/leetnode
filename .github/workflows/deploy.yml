@@ -2,7 +2,8 @@ name: Deploy
 
 on:
   push:
-    branches: [main]
+    branches: [main, master]
+  workflow_dispatch:
 
 # Only one deploy at a time — never cancel in-progress deploys
 concurrency:
