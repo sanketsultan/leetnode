@@ -139,6 +139,10 @@ jobs:
               docker pull "$src" && docker tag "$src" "leetnode-problem-$name:latest" || true
             done
 
+            echo "==> Stopping host nginx (port 80 needed by Docker)"
+            sudo systemctl stop nginx || true
+            sudo systemctl disable nginx || true
+
             echo "==> Pulling nginx"
             docker pull nginx:alpine
 
