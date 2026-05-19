@@ -139,6 +139,9 @@ jobs:
               docker pull "$src" && docker tag "$src" "leetnode-problem-$name:latest" || true
             done
 
+            echo "==> Pulling nginx"
+            docker pull nginx:alpine
+
             echo "==> Restarting with Docker Compose"
             docker compose up -d --pull never
 
