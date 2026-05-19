@@ -24,10 +24,11 @@ export interface VerifyResult {
 }
 
 // Server components run in Node.js and need an absolute URL.
-// Client components go through the Next.js rewrite proxy at /api → localhost:3001.
+// BACKEND_URL is set via Docker env var (http://backend:3001 in production).
+// Client components go through nginx which proxies /api → backend:3001.
 const BASE =
   typeof window === 'undefined'
-    ? 'http://localhost:3001/api'
+    ? `${process.env.BACKEND_URL ?? 'http://localhost:3001'}/api`
     : '/api';
 
 export async function getProblems(): Promise<Problem[]> {
