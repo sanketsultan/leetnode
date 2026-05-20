@@ -25,7 +25,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               </span>
             </a>
             <nav className="flex items-center gap-6">
-              <a href="/" className="nav-link">Problems</a>
+              <a href="/problems" className="nav-link">Problems</a>
               <a
                 href="https://github.com/sanketsultan/leetnode"
                 target="_blank"
