@@ -102,34 +102,12 @@ export default async function LandingPage() {
         </p>
 
         <div style={{ display: 'flex', gap: '0.875rem', flexWrap: 'wrap', justifyContent: 'center' }}>
-          <a href="/problems" style={{
-            background: 'var(--text)',
-            color: 'var(--bg)',
-            padding: '0.75rem 1.75rem',
-            borderRadius: '0.5rem',
-            fontSize: '0.9rem',
-            fontWeight: 600,
-            textDecoration: 'none',
-            transition: 'opacity 0.15s',
-            letterSpacing: '-0.01em',
-          }}
-            onMouseOver={e => (e.currentTarget.style.opacity = '0.85')}
-            onMouseOut={e => (e.currentTarget.style.opacity = '1')}
-          >
+          <a href="/problems" className="btn-primary">
             Start practicing →
           </a>
           <a href="https://github.com/sanketsultan/leetnode"
             target="_blank" rel="noopener noreferrer"
-            style={{
-              border: '1px solid var(--border)',
-              color: 'var(--text-muted)',
-              padding: '0.75rem 1.75rem',
-              borderRadius: '0.5rem',
-              fontSize: '0.9rem',
-              fontWeight: 500,
-              textDecoration: 'none',
-              transition: 'color 0.15s, border-color 0.15s',
-            }}
+            className="btn-secondary"
           >
             View on GitHub
           </a>
@@ -334,19 +312,7 @@ export default async function LandingPage() {
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', background: 'var(--border)', borderRadius: '0.75rem', overflow: 'hidden', border: '1px solid var(--border)' }}>
             {preview.map(p => (
-              <a key={p.slug} href={`/problems/${p.slug}`} style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                padding: '1.25rem 1.5rem',
-                background: 'var(--bg)',
-                textDecoration: 'none',
-                transition: 'background 0.1s',
-                gap: '1rem',
-              }}
-                onMouseOver={e => (e.currentTarget.style.background = 'var(--bg-subtle)')}
-                onMouseOut={e => (e.currentTarget.style.background = 'var(--bg)')}
-              >
+              <a key={p.slug} href={`/problems/${p.slug}`} className="preview-row">
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: '0.9rem', fontWeight: 500, color: 'var(--text)', marginBottom: '0.375rem' }}>
                     {p.title}
@@ -430,15 +396,7 @@ export default async function LandingPage() {
               { label: 'Problems', href: '/problems' },
               { label: 'GitHub', href: 'https://github.com/sanketsultan/leetnode' },
             ].map(({ label, href }) => (
-              <a key={label} href={href} style={{
-                fontSize: '0.8rem',
-                color: 'var(--text-faint)',
-                textDecoration: 'none',
-                transition: 'color 0.15s',
-              }}
-                onMouseOver={e => (e.currentTarget.style.color = 'var(--text-muted)')}
-                onMouseOut={e => (e.currentTarget.style.color = 'var(--text-faint)')}
-              >
+              <a key={label} href={href} className="footer-link">
                 {label}
               </a>
             ))}
