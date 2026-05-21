@@ -1,4 +1,5 @@
 import Dockerode from 'dockerode';
+import fs from 'fs';
 import { config } from '../config';
 import { VerifyResult } from '../types';
 
@@ -36,12 +37,42 @@ export async function cleanupOrphanedContainers(): Promise<void> {
   }
 }
 
+/**
+ * Write a clean /etc/hosts file to the host's /dev/shm (tmpfs) so that
+ * when it's bind-mounted into the container, `df -h` shows "tmpfs" at
+ * /etc/hosts instead of "/dev/root" (which would leak EC2 disk info).
+ *
+ * The file is cleaned up when the container is destroyed.
+ */
+function writeContainerHosts(sessionId: string): string {
+  const hostsPath = `/dev/shm/leetnode-hosts-${sessionId}`;
+  const content = [
+    '127.0.0.1\tlocalhost',
+    '::1\t\tlocalhost',
+    '',
+  ].join('\n');
+  fs.writeFileSync(hostsPath, content, { mode: 0o644 });
+  return hostsPath;
+}
+
+function cleanupContainerHosts(sessionId: string): void {
+  try {
+    fs.unlinkSync(`/dev/shm/leetnode-hosts-${sessionId}`);
+  } catch {
+    // ignore if already gone
+  }
+}
+
 export async function createAndStartContainer(
   problemSlug: string,
   sessionId: string,
   dockerImage: string
 ): Promise<{ containerId: string; containerName: string }> {
   const containerName = `leetnode-session-${sessionId}`;
+
+  // Write a clean hosts file on host tmpfs → prevents /dev/root from
+  // appearing in `df -h` inside the container (security: no EC2 disk info leak)
+  const hostsPath = writeContainerHosts(sessionId);
 
   const container = await docker.createContainer({
     Image: dockerImage,
@@ -65,6 +96,10 @@ export async function createAndStartContainer(
       SecurityOpt: ['no-new-privileges'],
       ReadonlyRootfs: false,           // Problems need to write files
       AutoRemove: false,
+      // Bind a clean hosts file from host tmpfs (/dev/shm) so the container's
+      // /etc/hosts is backed by tmpfs, not /dev/root (EC2 root EBS volume).
+      // This prevents users from seeing host disk info via `df -h`.
+      Binds: [`${hostsPath}:/etc/hosts:ro`],
     },
     Labels: {
       'com.leetnode.session': sessionId,
@@ -77,7 +112,7 @@ export async function createAndStartContainer(
   return { containerId: container.id, containerName };
 }
 
-export async function destroyContainer(containerId: string): Promise<void> {
+export async function destroyContainer(containerId: string, sessionId?: string): Promise<void> {
   try {
     const container = docker.getContainer(containerId);
     try {
@@ -89,6 +124,9 @@ export async function destroyContainer(containerId: string): Promise<void> {
     console.log(`[Docker] Destroyed container ${containerId.slice(0, 12)}`);
   } catch (err) {
     console.warn(`[Docker] Failed to destroy container ${containerId.slice(0, 12)}:`, err);
+  } finally {
+    // Clean up the tmpfs hosts file regardless of container destroy outcome
+    if (sessionId) cleanupContainerHosts(sessionId);
   }
 }
 

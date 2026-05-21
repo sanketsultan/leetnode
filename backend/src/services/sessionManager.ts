@@ -80,7 +80,7 @@ export async function expireSession(sessionId: string): Promise<void> {
   }
 
   if (session.containerId) {
-    await destroyContainer(session.containerId);
+    await destroyContainer(session.containerId, sessionId);
   }
 
   console.log(`[Session] Expired ${sessionId}`);
