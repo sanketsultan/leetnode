@@ -36,13 +36,108 @@ Go to: GitHub repo → Settings → Secrets → Actions → New secret
 | `DOCKERHUB_TOKEN` | Docker Hub access token (hub.docker.com → Account Settings → Security) |
 | `POSTHOG_KEY` | PostHog project API key (posthog.com) |
 | `DOMAIN` | `leetnode.io` |
-| `SMTP_HOST` | `smtp.gmail.com` (or your provider) |
-| `SMTP_PORT` | `587` |
-| `SMTP_USER` | Your Gmail address |
-| `SMTP_PASS` | Gmail App Password (not your real password) |
-| `FEEDBACK_TO` | Email address to receive feedback |
+| `RESEND_API_KEY` | From resend.com → API Keys (after adding leetnode.io domain) |
+| `FEEDBACK_TO` | Your personal email to receive feedback |
+| `CF_API_TOKEN` | Cloudflare API token (see Cloudflare setup below) |
+| `CF_ACCOUNT_ID` | Cloudflare → top-right account menu → Account ID |
 
-## 5. Push to main → auto deploys
+## 5. Cloudflare setup (one-time, ~15 minutes)
+
+### A. Create D1 database
+```bash
+# Install wrangler globally
+npm install -g wrangler
+wrangler login   # opens browser to authorize
+
+# Create the database (copy the ID it prints)
+wrangler d1 create leetnode
+
+# Apply schema
+wrangler d1 execute leetnode --file=db/schema.sql --remote
+```
+
+Paste the `database_id` into `workers/feedback/wrangler.toml` replacing `REPLACE_WITH_YOUR_D1_DATABASE_ID`.
+
+### B. Deploy the Worker manually (first time)
+```bash
+cd workers/feedback
+npm install
+npx wrangler secret put RESEND_API_KEY    # paste key from resend.com
+npx wrangler secret put FEEDBACK_TO       # your personal email
+npx wrangler secret put ALLOWED_ORIGIN    # https://leetnode.io
+npx wrangler deploy
+```
+
+The Worker runs at `leetnode.io/api/feedback` — intercepts feedback requests at the edge before they hit EC2.
+
+### C. Create Cloudflare API token (for GitHub Actions)
+Cloudflare dashboard → My Profile → API Tokens → Create Token
+
+Use the **"Edit Cloudflare Workers"** template, then add:
+- Account: Workers D1 Storage — Edit
+- Zone: leetnode.io — DNS Read
+
+Copy the token → GitHub secret `CF_API_TOKEN`
+
+### D. Resend — send from connect@leetnode.io
+1. Go to resend.com → sign up (free, 3000 emails/month)
+2. Domains → Add Domain → type `leetnode.io`
+3. It gives you 3 DNS records → add them in Cloudflare DNS
+4. Once verified → API Keys → Create API Key → copy it
+5. Add as GitHub secret `RESEND_API_KEY` and run wrangler secret put above
+
+### E. R2 bucket (for future problem assets)
+```bash
+# Create bucket
+wrangler r2 bucket create leetnode-problems
+
+# Upload all problem JSON files
+wrangler r2 object put leetnode-problems/nginx-502.json --file=problems/nginx-502.json
+# (repeat for each problem)
+```
+
+Problems can then be fetched from `https://pub.r2.dev/...` or via a Worker.
+
+### F. WAF rules (Cloudflare dashboard — Security → WAF)
+
+**Rule 1 — Rate limit session creation** (stops container spam):
+```
+Field: URI Path  Operator: equals  Value: /api/sessions
+AND
+Field: Request Method  Operator: equals  Value: POST
+→ Action: Rate limit — 5 requests/minute per IP — block for 1 hour
+```
+
+**Rule 2 — Block bad bots on API routes:**
+```
+Field: URI Path  Operator: contains  Value: /api/
+AND
+Field: Bot Score  Operator: less than  Value: 10
+→ Action: Block
+```
+
+### G. Cache rules (Cloudflare dashboard — Caching → Cache Rules)
+
+**Rule 1 — Cache Next.js static assets forever:**
+```
+URL path: /_next/static/*
+→ Cache: Cache everything
+→ Edge TTL: 1 month
+→ Browser TTL: 1 week
+```
+
+**Rule 2 — Skip cache on API routes:**
+```
+URL path: /api/*
+→ Cache: Bypass cache
+```
+
+### H. DNS — make sure your A record is orange-cloud (proxied)
+Cloudflare → DNS → A record for `leetnode.io` → click grey cloud to make it orange.
+
+This enables DDoS protection, CDN, and SSL termination at edge.
+
+## 6. Push to main → auto deploys
 
 ```bash
 git add .

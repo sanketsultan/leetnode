@@ -1,0 +1,20 @@
+name       = "leetnode-feedback"
+main       = "src/index.ts"
+compatibility_date = "2024-09-23"
+
+# Route: intercepts POST /api/feedback on your domain at Cloudflare edge
+# The request never hits EC2
+[[routes]]
+pattern = "leetnode.io/api/feedback"
+zone_name = "leetnode.io"
+
+# D1 database binding
+[[d1_databases]]
+binding      = "DB"
+database_name = "leetnode"
+database_id  = "2749cf3c-03d5-464f-bb59-a609c82e28fe"
+
+# Secrets (set with: npx wrangler secret put RESEND_API_KEY)
+# RESEND_API_KEY
+# FEEDBACK_TO
+# ALLOWED_ORIGIN

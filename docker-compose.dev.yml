@@ -23,11 +23,8 @@ services:
       SESSION_TTL_MS: "1200000"
       MAX_SESSIONS: "10"
       DOCKER_SOCKET: /var/run/docker.sock
-      # Email / feedback — set these to enable real email sending
-      SMTP_HOST: "${SMTP_HOST:-}"
-      SMTP_PORT: "${SMTP_PORT:-587}"
-      SMTP_USER: "${SMTP_USER:-}"
-      SMTP_PASS: "${SMTP_PASS:-}"
+      # Email / feedback — sign up at resend.com, add leetnode.io domain, paste key
+      RESEND_API_KEY: "${RESEND_API_KEY:-}"
       FEEDBACK_TO: "${FEEDBACK_TO:-}"
 
   frontend:
