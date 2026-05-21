@@ -16,6 +16,7 @@ export interface SessionResponse {
   expiresAt: string;
   status: string;
   wsUrl: string;
+  timeRemaining?: number;
 }
 
 export interface VerifyResult {
@@ -54,6 +55,17 @@ export async function createSession(problemSlug: string): Promise<SessionRespons
     throw new Error(err.error || 'Failed to create session');
   }
   return res.json();
+}
+
+/** Check whether an existing session is still alive. Returns null if expired/not found. */
+export async function getSession(sessionId: string): Promise<SessionResponse | null> {
+  try {
+    const res = await fetch(`${BASE}/sessions/${sessionId}`);
+    if (!res.ok) return null;
+    return res.json();
+  } catch {
+    return null;
+  }
 }
 
 export async function verifySession(sessionId: string): Promise<VerifyResult> {
