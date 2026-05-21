@@ -1,9 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { Problem, verifySession } from '../lib/api';
 import { analytics } from '../lib/analytics';
+
+const SOLVED_KEY = 'leetnode:solved';
 
 interface ProblemPanelProps {
   problem: Problem;
@@ -23,6 +25,33 @@ const difficultyColor: Record<string, string> = {
   hard:   '#ef4444',
 };
 
+// ── Lightweight confetti ───────────────────────────────────────────────────────
+const COLORS = ['#3b82f6', '#22c55e', '#f59e0b', '#a78bfa', '#f472b6', '#34d399'];
+
+function spawnConfetti(container: HTMLElement) {
+  const count = 80;
+  for (let i = 0; i < count; i++) {
+    const el = document.createElement('div');
+    const color = COLORS[Math.floor(Math.random() * COLORS.length)];
+    const size = 6 + Math.random() * 6;
+    const left = Math.random() * 100;
+    const delay = Math.random() * 0.6;
+    const duration = 1.2 + Math.random() * 1.2;
+    const rotate = Math.random() * 720;
+
+    el.style.cssText = `
+      position:absolute;width:${size}px;height:${size}px;
+      background:${color};left:${left}%;top:-10px;
+      border-radius:${Math.random() > 0.5 ? '50%' : '2px'};
+      animation:confetti-fall ${duration}s ${delay}s ease-in forwards;
+      transform:rotate(${rotate}deg);
+      pointer-events:none;
+    `;
+    container.appendChild(el);
+    setTimeout(() => el.remove(), (duration + delay + 0.1) * 1000);
+  }
+}
+
 export default function ProblemPanel({ problem, sessionId, sessionStatus, errorMessage }: ProblemPanelProps) {
   const [hintsRevealed, setHintsRevealed] = useState(0);
   const [showHints, setShowHints] = useState(false);
@@ -30,6 +59,19 @@ export default function ProblemPanel({ problem, sessionId, sessionStatus, errorM
   const [verifyMessage, setVerifyMessage] = useState('');
   const [timeRemaining, setTimeRemaining] = useState(problem.timeLimit * 1000);
   const [sessionReadyAt] = useState(() => Date.now());
+  const [alreadySolved, setAlreadySolved] = useState(false);
+  const confettiRef = useRef<HTMLDivElement>(null);
+
+  // Check if already solved
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(SOLVED_KEY);
+      if (raw) {
+        const solved: string[] = JSON.parse(raw);
+        setAlreadySolved(solved.includes(problem.slug));
+      }
+    } catch {}
+  }, [problem.slug]);
 
   useEffect(() => {
     if (sessionStatus !== 'ready') return;
@@ -37,10 +79,22 @@ export default function ProblemPanel({ problem, sessionId, sessionStatus, errorM
     return () => clearInterval(t);
   }, [sessionStatus]);
 
+  function markSolved() {
+    try {
+      const raw = localStorage.getItem(SOLVED_KEY);
+      const solved: string[] = raw ? JSON.parse(raw) : [];
+      if (!solved.includes(problem.slug)) {
+        solved.push(problem.slug);
+        localStorage.setItem(SOLVED_KEY, JSON.stringify(solved));
+      }
+      setAlreadySolved(true);
+    } catch {}
+  }
+
   function handleRevealHint() {
     const next = hintsRevealed + 1;
     setHintsRevealed(next);
-    analytics.hintRevealed(problem.slug, next - 1); // 0-indexed hint number
+    analytics.hintRevealed(problem.slug, next - 1);
   }
 
   async function handleVerify() {
@@ -55,6 +109,11 @@ export default function ProblemPanel({ problem, sessionId, sessionStatus, errorM
       const elapsed = Math.round((Date.now() - sessionReadyAt) / 1000);
       if (result.success) {
         analytics.verifyPassed(problem.slug, elapsed);
+        markSolved();
+        // Fire confetti
+        if (confettiRef.current) {
+          spawnConfetti(confettiRef.current);
+        }
       } else {
         analytics.verifyFailed(problem.slug, result.message);
       }
@@ -67,7 +126,12 @@ export default function ProblemPanel({ problem, sessionId, sessionStatus, errorM
   }
 
   return (
-    <div className="flex flex-col h-full" style={{ background: 'var(--bg)' }}>
+    <div className="flex flex-col h-full" style={{ background: 'var(--bg)', position: 'relative', overflow: 'hidden' }}>
+
+      {/* Confetti canvas */}
+      <div ref={confettiRef} style={{
+        position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 50, overflow: 'hidden',
+      }} />
 
       {/* Problem header */}
       <div className="px-6 pt-6 pb-5" style={{ borderBottom: '1px solid var(--border)' }}>
@@ -78,6 +142,12 @@ export default function ProblemPanel({ problem, sessionId, sessionStatus, errorM
           </span>
           <span style={{ color: 'var(--text-faint)' }}>·</span>
           <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{problem.category}</span>
+          {alreadySolved && (
+            <>
+              <span style={{ color: 'var(--text-faint)' }}>·</span>
+              <span className="text-xs font-medium" style={{ color: '#22c55e' }}>✓ Solved</span>
+            </>
+          )}
         </div>
         <h1 className="text-base font-semibold leading-snug mb-3" style={{ color: 'var(--text)' }}>
           {problem.title}
@@ -100,7 +170,7 @@ export default function ProblemPanel({ problem, sessionId, sessionStatus, errorM
         )}
         {sessionStatus === 'ready' && (
           <span className="flex items-center gap-1.5" style={{ color: 'var(--success)' }}>
-            <span className="w-1.5 h-1.5 rounded-full" style={{ background: 'var(--success)' }} />
+            <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ background: 'var(--success)' }} />
             Connected
           </span>
         )}
@@ -122,20 +192,13 @@ export default function ProblemPanel({ problem, sessionId, sessionStatus, errorM
           <ReactMarkdown
             components={{
               h2: ({ children }) => (
-                <h2 className="text-sm font-semibold mt-6 mb-2 first:mt-0"
-                  style={{ color: 'var(--text)' }}>
+                <h2 className="text-sm font-semibold mt-6 mb-2 first:mt-0" style={{ color: 'var(--text)' }}>
                   {children}
                 </h2>
               ),
-              p: ({ children }) => (
-                <p className="mb-3 leading-relaxed">{children}</p>
-              ),
-              ol: ({ children }) => (
-                <ol className="mb-3 space-y-1.5 list-decimal list-inside">{children}</ol>
-              ),
-              ul: ({ children }) => (
-                <ul className="mb-3 space-y-1.5 list-disc list-inside">{children}</ul>
-              ),
+              p: ({ children }) => <p className="mb-3 leading-relaxed">{children}</p>,
+              ol: ({ children }) => <ol className="mb-3 space-y-1.5 list-decimal list-inside">{children}</ol>,
+              ul: ({ children }) => <ul className="mb-3 space-y-1.5 list-disc list-inside">{children}</ul>,
               li: ({ children }) => <li>{children}</li>,
               code: ({ children, className }) => {
                 if (className?.includes('language-')) return <code className={className}>{children}</code>;
@@ -200,12 +263,13 @@ export default function ProblemPanel({ problem, sessionId, sessionStatus, errorM
         )}
       </div>
 
-      {/* Verify */}
+      {/* Verify section */}
       <div className="px-6 py-5" style={{ borderTop: '1px solid var(--border)' }}>
         {verifyStatus === 'success' && (
-          <div className="text-xs p-3 rounded-lg mb-3 leading-relaxed"
+          <div className="text-xs p-4 rounded-lg mb-3 leading-relaxed"
             style={{ background: '#052e16', border: '1px solid #166534', color: '#4ade80' }}>
-            {verifyMessage}
+            <div className="font-medium mb-1">Problem solved</div>
+            <div style={{ color: '#86efac' }}>{verifyMessage}</div>
           </div>
         )}
         {verifyStatus === 'failed' && (
@@ -219,11 +283,16 @@ export default function ProblemPanel({ problem, sessionId, sessionStatus, errorM
           onClick={handleVerify}
           disabled={!sessionId || sessionStatus !== 'ready' || verifyStatus === 'checking'}
           className="w-full py-2.5 rounded-lg text-sm font-medium transition-all disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-          style={{ background: 'var(--accent)', color: '#fff' }}
-          onMouseEnter={e => { if (!e.currentTarget.disabled) e.currentTarget.style.background = 'var(--accent-hover)'; }}
-          onMouseLeave={e => { e.currentTarget.style.background = 'var(--accent)'; }}>
+          style={{
+            background: verifyStatus === 'success' ? '#166534' : 'var(--accent)',
+            color: '#fff',
+          }}
+          onMouseEnter={e => { if (!e.currentTarget.disabled && verifyStatus !== 'success') e.currentTarget.style.background = 'var(--accent-hover)'; }}
+          onMouseLeave={e => { if (verifyStatus !== 'success') e.currentTarget.style.background = 'var(--accent)'; }}>
           {verifyStatus === 'checking' ? (
-            <><span className="animate-spin text-xs">⟳</span> Checking…</>
+            'Checking…'
+          ) : verifyStatus === 'success' ? (
+            '✓ Solved'
           ) : 'Check Solution'}
         </button>
       </div>

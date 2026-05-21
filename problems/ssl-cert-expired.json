@@ -1,0 +1,15 @@
+{
+  "slug": "ssl-cert-expired",
+  "title": "HTTPS Broken: Certificate Expired",
+  "difficulty": "easy",
+  "category": "Networking",
+  "tags": ["ssl", "tls", "nginx", "openssl", "certificates"],
+  "dockerImage": "leetnode-problem-ssl-cert-expired:latest",
+  "timeLimit": 900,
+  "description": "## The Situation\n\nUsers are getting `ERR_CERT_DATE_INVALID` in their browsers. Your site's SSL certificate expired 3 days ago.\n\nA new certificate has already been issued and is sitting in `/etc/ssl/renewed/`. You need to update the nginx configuration to use it and reload nginx.\n\n## Your Task\n\n1. Identify which certificate nginx is currently using\n2. Confirm the new certificate is valid\n3. Update the nginx config to point to the new certificate\n4. Reload nginx\n\n## Useful Commands\n\n```bash\n# Check current certificate expiry\nopenssl x509 -in /etc/ssl/certs/app.crt -noout -dates\n\n# Check the new certificate\nopenssl x509 -in /etc/ssl/renewed/app.crt -noout -dates\n\n# View nginx SSL config\ncat /etc/nginx/sites-available/app\n\n# Test and reload nginx\nnginx -t && nginx -s reload\n\n# Verify the running cert\necho | openssl s_client -connect localhost:443 2>/dev/null | openssl x509 -noout -dates\n```",
+  "hints": [
+    "Check both certificates with openssl x509 -noout -dates to see which is expired and which is valid.",
+    "The new certificate is in /etc/ssl/renewed/. The nginx config still points to /etc/ssl/certs/. Update the ssl_certificate and ssl_certificate_key paths.",
+    "Edit /etc/nginx/sites-available/app. Change ssl_certificate to /etc/ssl/renewed/app.crt and ssl_certificate_key to /etc/ssl/renewed/app.key. Then run: nginx -t && nginx -s reload"
+  ]
+}

@@ -3,37 +3,29 @@ import './globals.css';
 import PostHogProvider from '../components/PostHogProvider';
 
 export const metadata: Metadata = {
-  title: 'LeetNode — Infrastructure Debugging Practice',
-  description: 'Practice debugging GPU, Kubernetes, and infrastructure problems with real terminal access.',
+  title: 'LeetNode: Infrastructure Debugging Platform',
+  description: 'Real broken systems. Real terminal. Practice the debugging skills that matter on-call.',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className="min-h-screen" style={{ background: 'var(--bg)', color: 'var(--text)' }}>
-        <header style={{ borderBottom: '1px solid var(--border)' }}>
-          <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
-            <a href="/" className="flex items-center gap-2 group">
-              <span className="text-sm font-semibold tracking-tight" style={{ color: 'var(--text)' }}>
-                LeetNode
-              </span>
-              <span className="text-xs px-1.5 py-0.5 rounded font-mono" style={{
-                background: 'var(--border)',
-                color: 'var(--text-muted)',
-              }}>
-                beta
-              </span>
+      <body style={{ background: 'var(--bg)', color: 'var(--text)', minHeight: '100vh' }}>
+        <header className="platform-header">
+          <div className="platform-header-inner">
+            <a href="/" className="platform-logo">
+              LeetNode
             </a>
-            <nav className="flex items-center gap-6">
-              <a href="/problems" className="nav-link">Problems</a>
-              <a
-                href="https://github.com/sanketsultan/leetnode"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="nav-link">
-                GitHub
-              </a>
+            <nav className="platform-nav">
+              <a href="/problems" className="platform-nav-link">Problems</a>
+              <a href="/tracks" className="platform-nav-link">Tracks</a>
+              <a href="/leaderboard" className="platform-nav-link">Leaderboard</a>
             </nav>
+            <div className="platform-nav-actions">
+              <a href="/problems" className="platform-cta-btn">
+                Start practicing
+              </a>
+            </div>
           </div>
         </header>
         <PostHogProvider>{children}</PostHogProvider>

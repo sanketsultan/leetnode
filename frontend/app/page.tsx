@@ -1,405 +1,316 @@
 import { getProblems, Problem } from '../lib/api';
+import ProblemsClient from './problems/client';
+import { TRACKS } from '../lib/tracks';
+import HeroTerminal from '../components/HeroTerminal';
+import SkillsTicker from '../components/SkillsTicker';
 
-const difficultyColor: Record<string, string> = {
-  easy:   '#22c55e',
-  medium: '#f59e0b',
-  hard:   '#ef4444',
-};
-
-const features = [
-  {
-    icon: '⬡',
-    title: 'Real environments',
-    body: 'Isolated Docker containers with pre-broken configs. Not simulations — actual broken systems you have to fix.',
-  },
-  {
-    icon: '▸',
-    title: 'Instant terminal',
-    body: 'Full bash in your browser. No setup, no SSH keys, no waiting. Open a problem and start debugging in seconds.',
-  },
-  {
-    icon: '✓',
-    title: 'Verified solutions',
-    body: "Click Check Solution and know immediately if your fix works. No guessing, no self-grading.",
-  },
-];
-
-const steps = [
-  { n: '01', title: 'Pick a problem', body: 'Choose from GPU failures, Kubernetes crashes, networking issues, and more.' },
-  { n: '02', title: 'Debug in the terminal', body: 'SSH-quality bash access. Use any tool you would reach for on a real server.' },
-  { n: '03', title: 'Verify the fix', body: 'Hit Check Solution. A real script validates your work end-to-end.' },
-];
-
-export default async function LandingPage() {
+export default async function HomePage() {
   let problems: Problem[] = [];
-  try {
-    problems = await getProblems();
-  } catch { /* backend starting */ }
+  try { problems = await getProblems(); } catch {}
 
-  const preview = problems.slice(0, 3);
+  const categoryCount = new Set(problems.map(p => p.category)).size;
 
   return (
-    <div style={{ color: 'var(--text)' }}>
+    <div style={{ color: 'var(--text)', position: 'relative', overflow: 'hidden' }}>
 
-      {/* ── Hero ──────────────────────────────────────────────────────────── */}
-      <section style={{
-        minHeight: '88vh',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        textAlign: 'center',
-        padding: '0 1.5rem',
-        position: 'relative',
-        overflow: 'hidden',
-      }}>
-        {/* Subtle radial glow */}
-        <div style={{
-          position: 'absolute',
-          top: '30%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          width: '600px',
-          height: '400px',
-          background: 'radial-gradient(ellipse, rgba(59,130,246,0.06) 0%, transparent 70%)',
-          pointerEvents: 'none',
+      {/* Aurora blobs */}
+      <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0 }}>
+        <div className="aurora-1" style={{
+          position: 'absolute', top: '-20%', left: '5%',
+          width: '650px', height: '650px', borderRadius: '50%',
+          background: 'radial-gradient(ellipse, rgba(99,102,241,0.13) 0%, transparent 70%)',
+          filter: 'blur(50px)',
         }} />
+        <div className="aurora-2" style={{
+          position: 'absolute', top: '20%', right: '-10%',
+          width: '550px', height: '550px', borderRadius: '50%',
+          background: 'radial-gradient(ellipse, rgba(139,92,246,0.09) 0%, transparent 70%)',
+          filter: 'blur(50px)',
+        }} />
+        <div className="aurora-3" style={{
+          position: 'absolute', bottom: '10%', left: '30%',
+          width: '450px', height: '450px', borderRadius: '50%',
+          background: 'radial-gradient(ellipse, rgba(59,130,246,0.06) 0%, transparent 70%)',
+          filter: 'blur(50px)',
+        }} />
+      </div>
 
-        <p style={{
-          fontSize: '0.75rem',
-          letterSpacing: '0.15em',
-          textTransform: 'uppercase',
-          color: 'var(--accent)',
-          marginBottom: '1.5rem',
-          fontWeight: 500,
-        }}>
-          Infrastructure · GPU · Kubernetes
-        </p>
+      {/* ── Hero ────────────────────────────────────────────────────────── */}
+      <section style={{ padding: '5rem 2rem 4rem', maxWidth: '1200px', margin: '0 auto', position: 'relative', zIndex: 1 }}>
+        <div className="hero-grid">
 
-        <h1 style={{
-          fontSize: 'clamp(2.5rem, 7vw, 5.5rem)',
-          fontWeight: 700,
-          lineHeight: 1.05,
-          letterSpacing: '-0.03em',
-          maxWidth: '900px',
-          marginBottom: '1.75rem',
-        }}>
-          Debug real infrastructure.
-          <br />
-          <span style={{ color: 'var(--text-muted)' }}>In your browser.</span>
-        </h1>
-
-        <p style={{
-          fontSize: 'clamp(1rem, 2vw, 1.2rem)',
-          color: 'var(--text-muted)',
-          maxWidth: '520px',
-          lineHeight: 1.65,
-          marginBottom: '2.5rem',
-        }}>
-          Isolated Docker environments with pre-broken systems.
-          Real terminal access. Verified solutions.
-          Practice the skills that matter in production.
-        </p>
-
-        <div style={{ display: 'flex', gap: '0.875rem', flexWrap: 'wrap', justifyContent: 'center' }}>
-          <a href="/problems" className="btn-primary">
-            Start practicing →
-          </a>
-          <a href="https://github.com/sanketsultan/leetnode"
-            target="_blank" rel="noopener noreferrer"
-            className="btn-secondary"
-          >
-            View on GitHub
-          </a>
-        </div>
-
-        {/* Scroll hint */}
-        <div style={{
-          position: 'absolute',
-          bottom: '2.5rem',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: '0.5rem',
-          color: 'var(--text-faint)',
-          fontSize: '0.7rem',
-          letterSpacing: '0.1em',
-          textTransform: 'uppercase',
-        }}>
-          <div style={{
-            width: '1px',
-            height: '40px',
-            background: 'linear-gradient(to bottom, transparent, var(--border))',
-          }} />
-        </div>
-      </section>
-
-      {/* ── Stats bar ─────────────────────────────────────────────────────── */}
-      <section style={{
-        borderTop: '1px solid var(--border)',
-        borderBottom: '1px solid var(--border)',
-        padding: '2rem 1.5rem',
-      }}>
-        <div style={{
-          maxWidth: '900px',
-          margin: '0 auto',
-          display: 'grid',
-          gridTemplateColumns: 'repeat(3, 1fr)',
-          gap: '2rem',
-          textAlign: 'center',
-        }}>
-          {[
-            { value: problems.length || '—', label: 'Problems' },
-            { value: problems.length ? new Set(problems.map(p => p.category)).size : '—', label: 'Categories' },
-            { value: 'Docker', label: 'Runtime' },
-          ].map(({ value, label }) => (
-            <div key={label}>
-              <div style={{ fontSize: '2rem', fontWeight: 700, letterSpacing: '-0.03em', fontVariantNumeric: 'tabular-nums' }}>
-                {value}
-              </div>
-              <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.25rem', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
-                {label}
-              </div>
+          {/* Left column: copy */}
+          <div>
+            <div className="hero-badge anim-fade-up">
+              <span className="hero-badge-dot" />
+              Infrastructure Debugging Platform
             </div>
-          ))}
-        </div>
-      </section>
 
-      {/* ── Features ──────────────────────────────────────────────────────── */}
-      <section style={{ padding: '7rem 1.5rem', maxWidth: '1000px', margin: '0 auto' }}>
-        <p style={{
-          textAlign: 'center',
-          fontSize: '0.75rem',
-          letterSpacing: '0.15em',
-          textTransform: 'uppercase',
-          color: 'var(--text-faint)',
-          marginBottom: '4rem',
-        }}>
-          Why LeetNode
-        </p>
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
-          gap: '1px',
-          background: 'var(--border)',
-          border: '1px solid var(--border)',
-          borderRadius: '1rem',
-          overflow: 'hidden',
-        }}>
-          {features.map(({ icon, title, body }) => (
-            <div key={title} style={{
-              background: 'var(--bg)',
-              padding: '2.5rem 2rem',
+            <h1 className="anim-fade-up-1" style={{
+              fontSize: 'clamp(2.25rem, 5vw, 3.75rem)',
+              fontWeight: 800,
+              lineHeight: 1.06,
+              letterSpacing: '-0.05em',
+              marginBottom: '1.5rem',
             }}>
-              <div style={{
-                fontSize: '1.5rem',
-                marginBottom: '1.25rem',
-                color: 'var(--text-muted)',
-              }}>
-                {icon}
-              </div>
-              <h3 style={{
-                fontSize: '1rem',
-                fontWeight: 600,
-                letterSpacing: '-0.02em',
-                marginBottom: '0.75rem',
-              }}>
-                {title}
-              </h3>
-              <p style={{
-                fontSize: '0.875rem',
-                color: 'var(--text-muted)',
-                lineHeight: 1.7,
-              }}>
-                {body}
-              </p>
-            </div>
-          ))}
-        </div>
-      </section>
+              Debug production
+              <br />
+              <span className="gradient-text">before it pages you.</span>
+            </h1>
 
-      {/* ── How it works ──────────────────────────────────────────────────── */}
-      <section style={{
-        padding: '5rem 1.5rem 7rem',
-        borderTop: '1px solid var(--border)',
-      }}>
-        <div style={{ maxWidth: '700px', margin: '0 auto' }}>
-          <p style={{
-            fontSize: '0.75rem',
-            letterSpacing: '0.15em',
-            textTransform: 'uppercase',
-            color: 'var(--text-faint)',
-            marginBottom: '3.5rem',
-            textAlign: 'center',
-          }}>
-            How it works
-          </p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
-            {steps.map(({ n, title, body }, i) => (
-              <div key={n} style={{
-                display: 'grid',
-                gridTemplateColumns: '3rem 1fr',
-                gap: '1.5rem',
-                paddingBottom: i < steps.length - 1 ? '2.5rem' : '0',
-                position: 'relative',
-              }}>
-                {i < steps.length - 1 && (
-                  <div style={{
-                    position: 'absolute',
-                    left: '1.4rem',
-                    top: '2.2rem',
-                    bottom: '0',
-                    width: '1px',
-                    background: 'var(--border)',
-                  }} />
-                )}
-                <div style={{
-                  fontSize: '0.7rem',
-                  fontWeight: 700,
-                  fontFamily: 'monospace',
-                  color: 'var(--text-faint)',
-                  paddingTop: '0.2rem',
-                  letterSpacing: '0.05em',
-                }}>
-                  {n}
+            <p className="anim-fade-up-2" style={{
+              fontSize: '1rem',
+              color: 'var(--text-muted)',
+              lineHeight: 1.75,
+              maxWidth: '440px',
+              marginBottom: '2.25rem',
+              letterSpacing: '-0.01em',
+            }}>
+              Real broken systems. Live terminal.
+              Fix it and know immediately if you got it right.
+              No tutorials. No hand-holding. Just you and the logs.
+            </p>
+
+            <div className="anim-fade-up-3" style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '3rem' }}>
+              <a href="/problems" className="btn-primary">
+                Browse problems
+                <span style={{ opacity: 0.75 }}>-&gt;</span>
+              </a>
+              <a href="/tracks" className="btn-outline">View tracks</a>
+            </div>
+
+            {/* Stats row */}
+            <div className="anim-fade-up-4" style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(4, 1fr)',
+              gap: '1px',
+              background: 'var(--border-subtle)',
+              border: '1px solid var(--border)',
+              borderRadius: 'var(--radius-lg)',
+              overflow: 'hidden',
+            }}>
+              {[
+                { n: problems.length || '8', label: 'Problems' },
+                { n: categoryCount || '4',   label: 'Categories' },
+                { n: TRACKS.length,           label: 'Tracks' },
+                { n: '< 5s',                  label: 'Boot time' },
+              ].map(({ n, label }) => (
+                <div key={label} className="hero-stat-card" style={{ borderRadius: 0, border: 'none', padding: '1rem' }}>
+                  <div className="stat-number" style={{ fontSize: '1.625rem' }}>{n}</div>
+                  <div className="stat-label" style={{ fontSize: '0.5625rem', marginTop: '0.25rem' }}>{label}</div>
                 </div>
-                <div>
-                  <h3 style={{
-                    fontSize: '1rem',
-                    fontWeight: 600,
-                    letterSpacing: '-0.02em',
-                    marginBottom: '0.5rem',
-                  }}>
-                    {title}
-                  </h3>
-                  <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', lineHeight: 1.7 }}>
-                    {body}
-                  </p>
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
+          </div>
+
+          {/* Right column: animated terminal — offset slightly to optically match the headline */}
+          <div className="hero-terminal-col anim-fade-in" style={{ animationDelay: '0.2s', paddingTop: '0.5rem' }}>
+            <HeroTerminal />
           </div>
         </div>
       </section>
 
-      {/* ── Problem preview ───────────────────────────────────────────────── */}
-      {preview.length > 0 && (
-        <section style={{
-          padding: '5rem 1.5rem 7rem',
-          borderTop: '1px solid var(--border)',
-          maxWidth: '900px',
-          margin: '0 auto',
-        }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '2.5rem' }}>
-            <p style={{
-              fontSize: '0.75rem',
-              letterSpacing: '0.15em',
-              textTransform: 'uppercase',
-              color: 'var(--text-faint)',
-            }}>
-              Recent problems
-            </p>
-            <a href="/problems" style={{
-              fontSize: '0.8rem',
-              color: 'var(--accent)',
-              textDecoration: 'none',
-            }}>
-              View all →
+      {/* ── Tracks ──────────────────────────────────────────────────────── */}
+      <section style={{
+        borderTop: '1px solid var(--border-subtle)',
+        padding: '5rem 2rem',
+        position: 'relative', zIndex: 1,
+      }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+          <div style={{
+            display: 'flex', alignItems: 'flex-end',
+            justifyContent: 'space-between', marginBottom: '1.5rem',
+            flexWrap: 'wrap', gap: '1rem',
+          }}>
+            <div>
+              <p className="section-label" style={{ marginBottom: '0.5rem' }}>Learning paths</p>
+              <h2 style={{ fontSize: '1.5rem', fontWeight: 700, letterSpacing: '-0.04em' }}>
+                Pick your track.
+              </h2>
+            </div>
+            <a href="/tracks" className="btn-outline" style={{ fontSize: '0.75rem', padding: '0.3125rem 0.875rem' }}>
+              All tracks -&gt;
             </a>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', background: 'var(--border)', borderRadius: '0.75rem', overflow: 'hidden', border: '1px solid var(--border)' }}>
-            {preview.map(p => (
-              <a key={p.slug} href={`/problems/${p.slug}`} className="preview-row">
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: '0.9rem', fontWeight: 500, color: 'var(--text)', marginBottom: '0.375rem' }}>
-                    {p.title}
-                  </div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-faint)' }}>{p.category}</div>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexShrink: 0 }}>
-                  <span style={{ fontSize: '0.75rem', fontWeight: 600, color: difficultyColor[p.difficulty], textTransform: 'capitalize' }}>
-                    {p.difficulty}
-                  </span>
-                  <span style={{ fontSize: '0.75rem', fontFamily: 'monospace', color: 'var(--text-faint)' }}>
-                    {Math.floor(p.timeLimit / 60)}m
-                  </span>
-                  <span style={{ color: 'var(--text-faint)', fontSize: '0.8rem' }}>→</span>
-                </div>
-              </a>
-            ))}
-          </div>
-        </section>
-      )}
+          {/* Skills ticker — scrolls continuously, pauses on hover */}
+          <SkillsTicker />
 
-      {/* ── CTA ───────────────────────────────────────────────────────────── */}
-      <section style={{
-        borderTop: '1px solid var(--border)',
-        padding: '8rem 1.5rem',
-        textAlign: 'center',
-      }}>
-        <h2 style={{
-          fontSize: 'clamp(1.75rem, 4vw, 3rem)',
-          fontWeight: 700,
-          letterSpacing: '-0.03em',
-          marginBottom: '1.25rem',
-          lineHeight: 1.1,
-        }}>
-          Ready to debug?
-        </h2>
-        <p style={{
-          fontSize: '1rem',
-          color: 'var(--text-muted)',
-          marginBottom: '2.5rem',
-          maxWidth: '420px',
-          margin: '0 auto 2.5rem',
-          lineHeight: 1.65,
-        }}>
-          No account required. Pick a problem and start fixing things.
-        </p>
-        <a href="/problems" style={{
-          display: 'inline-block',
-          background: 'var(--text)',
-          color: 'var(--bg)',
-          padding: '0.875rem 2.25rem',
-          borderRadius: '0.5rem',
-          fontSize: '0.9rem',
-          fontWeight: 600,
-          textDecoration: 'none',
-          letterSpacing: '-0.01em',
-        }}>
-          Browse problems →
-        </a>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+            gap: '1px',
+            background: 'var(--border-subtle)',
+            border: '1px solid var(--border)',
+            borderRadius: 'var(--radius-xl)',
+            overflow: 'hidden',
+          }}>
+            {TRACKS.map((track, i) => {
+              const count = track.problemSlugs.length;
+
+              // Representative command snippet per track — shown on card hover
+              const cmds: Record<string, string> = {
+                'gpu-ml':             '$ nvidia-smi | grep OOM',
+                'production-ops':     '$ df -h && journalctl -xe',
+                'python-performance': '$ python -m tracemalloc',
+                'networking':         '$ curl -vI https://api && openssl',
+              };
+              const cmd = cmds[track.id] ?? '$ ls -la';
+
+              return (
+                <a key={track.id} href={`/tracks#${track.id}`} className="track-card">
+                  <div style={{
+                    fontSize: '0.6875rem', fontFamily: 'monospace',
+                    color: 'var(--text-faint)', marginBottom: '1.25rem',
+                    letterSpacing: '0.1em', fontWeight: 600,
+                  }}>
+                    {String(i + 1).padStart(2, '0')}
+                  </div>
+                  <h3 style={{
+                    fontSize: '1rem', fontWeight: 700,
+                    letterSpacing: '-0.03em', marginBottom: '0.625rem', color: 'var(--text)',
+                  }}>
+                    {track.title}
+                  </h3>
+                  <p style={{
+                    fontSize: '0.8125rem', color: 'var(--text-muted)',
+                    lineHeight: 1.7, marginBottom: '1.5rem',
+                  }}>
+                    {track.description}
+                  </p>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span style={{
+                      fontSize: '0.6875rem', color: '#a5b4fc',
+                      background: 'var(--accent-dim)', border: '1px solid var(--border-accent)',
+                      padding: '0.1875rem 0.625rem', borderRadius: '999px', fontWeight: 500,
+                    }}>
+                      {count} {count === 1 ? 'problem' : 'problems'}
+                    </span>
+                    <span style={{ fontSize: '0.6875rem', color: 'var(--text-faint)', fontFamily: 'monospace' }}>
+                      {track.level}
+                    </span>
+                  </div>
+                  {/* Command preview — fades in on card hover via CSS */}
+                  <span className="track-cmd">{cmd}</span>
+                </a>
+              );
+            })}
+          </div>
+        </div>
       </section>
 
-      {/* ── Footer ────────────────────────────────────────────────────────── */}
-      <footer style={{
-        borderTop: '1px solid var(--border)',
-        padding: '2rem 1.5rem',
+      {/* ── Problems ────────────────────────────────────────────────────── */}
+      <section style={{ borderTop: '1px solid var(--border-subtle)', position: 'relative', zIndex: 1 }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '4rem 2rem 0' }}>
+          <div style={{
+            display: 'flex', alignItems: 'flex-end',
+            justifyContent: 'space-between', marginBottom: '1.5rem',
+            flexWrap: 'wrap', gap: '1rem',
+          }}>
+            <div>
+              <p className="section-label" style={{ marginBottom: '0.5rem' }}>Problem library</p>
+              <h2 style={{ fontSize: '1.5rem', fontWeight: 700, letterSpacing: '-0.04em' }}>
+                Start solving.
+              </h2>
+            </div>
+            <a href="/problems" className="btn-outline" style={{ fontSize: '0.75rem', padding: '0.3125rem 0.875rem' }}>
+              Full library -&gt;
+            </a>
+          </div>
+        </div>
+        <ProblemsClient initialProblems={problems} embedded />
+      </section>
+
+      {/* ── Philosophy bento ────────────────────────────────────────────── */}
+      <section style={{
+        borderTop: '1px solid var(--border-subtle)',
+        padding: '6rem 2rem',
+        position: 'relative', zIndex: 1,
       }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+          <div style={{ marginBottom: '2.5rem' }}>
+            <p className="section-label" style={{ marginBottom: '0.5rem' }}>Why LeetNode</p>
+            <h2 style={{ fontSize: '1.5rem', fontWeight: 700, letterSpacing: '-0.04em' }}>
+              Built different.
+            </h2>
+          </div>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+            border: '1px solid var(--border)',
+            borderRadius: 'var(--radius-xl)',
+            overflow: 'hidden',
+          }}>
+            {[
+              { title: 'Not a tutorial',  body: 'No guided steps. A broken system and a terminal. Exactly like production.', accent: '#6366f1' },
+              { title: 'Not a quiz',      body: 'The system either works or it does not. Verification runs the real thing, end to end.', accent: '#8b5cf6' },
+              { title: 'Not a course',    body: 'No videos, no slides. Ten minutes of actual debugging teaches more than an hour of watching.', accent: '#3b82f6' },
+              { title: 'Real skills',     body: 'The commands you run here are the commands you would run on a production server.', accent: '#06b6d4' },
+            ].map(({ title, body, accent }) => (
+              <div key={title} className="bento-card">
+                <div style={{
+                  width: '28px', height: '3px', borderRadius: '2px',
+                  background: accent, marginBottom: '1.25rem',
+                  boxShadow: `0 0 12px ${accent}99`,
+                }} />
+                <h3 style={{ fontSize: '0.9375rem', fontWeight: 700, letterSpacing: '-0.025em', marginBottom: '0.625rem', color: 'var(--text)' }}>
+                  {title}
+                </h3>
+                <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', lineHeight: 1.75 }}>{body}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── CTA ─────────────────────────────────────────────────────────── */}
+      <section style={{ borderTop: '1px solid var(--border-subtle)', padding: '5rem 2rem', position: 'relative', zIndex: 1 }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto', textAlign: 'center' }}>
+          <div className="cta-card">
+            <div style={{
+              position: 'absolute', top: '-40%', left: '20%',
+              width: '60%', height: '200%',
+              background: 'radial-gradient(ellipse, rgba(99,102,241,0.09) 0%, transparent 65%)',
+              pointerEvents: 'none',
+            }} />
+            <p className="section-label" style={{ marginBottom: '1rem' }}>Ready to level up?</p>
+            <h2 style={{
+              fontSize: 'clamp(1.75rem, 4vw, 3rem)',
+              fontWeight: 800, letterSpacing: '-0.05em',
+              marginBottom: '1rem', position: 'relative',
+            }}>
+              Stop reading.{' '}
+              <span className="gradient-text">Start debugging.</span>
+            </h2>
+            <p style={{ fontSize: '0.9375rem', color: 'var(--text-muted)', marginBottom: '2.25rem', position: 'relative' }}>
+              Your terminal is waiting. No setup, no account required.
+            </p>
+            <div style={{ display: 'flex', gap: '0.875rem', justifyContent: 'center', flexWrap: 'wrap', position: 'relative' }}>
+              <a href="/problems" className="btn-primary">Pick a problem -&gt;</a>
+              <a href="/tracks" className="btn-outline">Browse tracks</a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Footer ──────────────────────────────────────────────────────── */}
+      <footer style={{ borderTop: '1px solid var(--border-subtle)', padding: '1.75rem 2rem', position: 'relative', zIndex: 1 }}>
         <div style={{
-          maxWidth: '1000px',
-          margin: '0 auto',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: '1rem',
+          maxWidth: '1200px', margin: '0 auto',
+          display: 'flex', justifyContent: 'space-between',
+          alignItems: 'center', flexWrap: 'wrap', gap: '1rem',
         }}>
-          <span style={{ fontSize: '0.8rem', color: 'var(--text-faint)' }}>
-            LeetNode · beta
+          <span style={{
+            fontSize: '0.8125rem', fontWeight: 800, letterSpacing: '-0.03em',
+            background: 'linear-gradient(135deg, #a5b4fc, #c4b5fd)',
+            WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+          }}>
+            LeetNode
           </span>
           <div style={{ display: 'flex', gap: '1.5rem' }}>
-            {[
-              { label: 'Problems', href: '/problems' },
-              { label: 'GitHub', href: 'https://github.com/sanketsultan/leetnode' },
-            ].map(({ label, href }) => (
-              <a key={label} href={href} className="footer-link">
-                {label}
-              </a>
-            ))}
+            <a href="/problems" className="footer-link">Problems</a>
+            <a href="/tracks" className="footer-link">Tracks</a>
+            <a href="/leaderboard" className="footer-link">Leaderboard</a>
           </div>
         </div>
       </footer>

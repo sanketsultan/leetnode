@@ -53,11 +53,17 @@ export async function createAndStartContainer(
     AttachStdout: false,
     AttachStderr: false,
     HostConfig: {
-      Memory: 512 * 1024 * 1024, // 512MB
-      MemorySwap: 512 * 1024 * 1024, // No swap
-      NanoCpus: 1e9, // 1 CPU
-      NetworkMode: 'none',
+      // t3.medium budget: 4GB RAM / 2 vCPU shared across all services.
+      // Each problem container gets 256MB + 0.5 CPU max. With MAX_SESSIONS=10
+      // worst case is 2.56GB for containers, leaving ~1.4GB for OS + services.
+      Memory: 256 * 1024 * 1024,       // 256MB per container
+      MemorySwap: 256 * 1024 * 1024,   // No swap (swap = memory limit)
+      MemoryReservation: 64 * 1024 * 1024, // Soft limit: 64MB guaranteed
+      NanoCpus: 5e8,                   // 0.5 CPU max
+      PidsLimit: 64,                   // Prevent fork bombs
+      NetworkMode: 'none',             // No network access from sandbox
       SecurityOpt: ['no-new-privileges'],
+      ReadonlyRootfs: false,           // Problems need to write files
       AutoRemove: false,
     },
     Labels: {

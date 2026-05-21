@@ -1,0 +1,15 @@
+{
+  "slug": "nginx-bad-gateway",
+  "title": "502 Bad Gateway: Wrong Upstream Port",
+  "difficulty": "easy",
+  "category": "Networking",
+  "tags": ["nginx", "proxy", "http", "config"],
+  "dockerImage": "leetnode-problem-nginx-bad-gateway:latest",
+  "timeLimit": 900,
+  "description": "## The Situation\n\nYour team's API service was just deployed. The service runs on **port 8081** and is confirmed healthy. But every request through the load balancer returns `502 Bad Gateway`.\n\nnginx is running. The upstream service is running. Something in the proxy configuration is wrong.\n\n## Your Task\n\n1. Diagnose why nginx returns 502\n2. Find the misconfiguration in the nginx config file\n3. Fix it and reload nginx\n\n## Useful Commands\n\n```bash\n# Check if the upstream app is running\ncurl http://localhost:8081/health\n\n# Test through nginx (should return 200, currently returns 502)\ncurl -v http://localhost/api/health\n\n# View the nginx config\ncat /etc/nginx/sites-available/api\n\n# Test config syntax\nnginx -t\n\n# Reload after fixing\nnginx -s reload\n```",
+  "hints": [
+    "nginx returns 502 when it can't reach the upstream server. The upstream app is running fine — something in the proxy config is wrong.",
+    "Compare the port in the nginx upstream block against the port the actual service listens on.",
+    "Edit /etc/nginx/sites-available/api. In the upstream block, change the port from 8080 to 8081. Then run: nginx -s reload"
+  ]
+}

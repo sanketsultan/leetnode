@@ -5,6 +5,12 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     restart: unless-stopped
+    # t3.medium resource budget (2 vCPU / 4 GB):
+    # OS+Docker ~600MB | nginx 32MB | backend 192MB | frontend 256MB
+    # leaves ~2.9GB for up to 10 problem containers @ 256MB each
+    mem_limit: 192m
+    memswap_limit: 192m
+    cpus: "0.4"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./problems:/problems:ro
@@ -14,8 +20,8 @@ services:
       WS_PORT: "3002"
       WS_PUBLIC_URL: ws://localhost/ws
       FRONTEND_URL: http://localhost
-      SESSION_TTL_MS: "1800000"
-      MAX_SESSIONS: "20"
+      SESSION_TTL_MS: "1200000"
+      MAX_SESSIONS: "10"
       DOCKER_SOCKET: /var/run/docker.sock
 
   frontend:
@@ -26,6 +32,9 @@ services:
         NEXT_PUBLIC_POSTHOG_KEY: ""
         NEXT_PUBLIC_POSTHOG_HOST: "https://eu.i.posthog.com"
     restart: unless-stopped
+    mem_limit: 256m
+    memswap_limit: 256m
+    cpus: "0.4"
     environment:
       NODE_ENV: production
       PORT: "3000"
@@ -34,6 +43,9 @@ services:
   nginx:
     image: nginx:alpine
     restart: unless-stopped
+    mem_limit: 32m
+    memswap_limit: 32m
+    cpus: "0.1"
     ports:
       - "80:80"
     volumes:

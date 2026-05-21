@@ -1,0 +1,15 @@
+{
+  "slug": "python-memory-leak",
+  "title": "Batch Processor Leaking Memory",
+  "difficulty": "medium",
+  "category": "Python",
+  "tags": ["python", "memory", "debugging", "performance", "lru"],
+  "dockerImage": "leetnode-problem-python-memory-leak:latest",
+  "timeLimit": 1800,
+  "description": "## The Situation\n\nA batch processing service has been running in production for 3 days. Memory usage started at 200MB, and is now at **4.8GB** — and climbing. The server will OOM-kill the process within hours.\n\nThe service processes jobs and caches results in a global dictionary. The cache was added to speed up repeated jobs, but something is wrong with how it grows.\n\n## Your Task\n\n1. Open `/home/user/processor.py` and find the memory leak\n2. Fix it so the cache stays bounded\n3. Verify that running two batches doesn't double memory usage\n\n## Useful Commands\n\n```bash\n# Run the processor and observe memory behavior\npython3 /home/user/processor.py\n\n# You'll see cache size after each batch\n# A healthy cache should stay the same size across batches\n\n# Measure memory usage\nvalgrind python3 processor.py  # (not available)\npython3 -c \"import tracemalloc; ...\"  # already in the script\n```\n\n## What a Fix Looks Like\n\nThe cache should be **bounded** — it should not grow indefinitely across multiple batches. Common fixes:\n- Use `functools.lru_cache` with a `maxsize`\n- Limit the dict to N entries\n- Clear old entries periodically",
+  "hints": [
+    "Look at what happens to _result_cache across multiple calls to run_batch(). Each batch adds new entries with unique keys — nothing ever removes them.",
+    "The simplest fix: add a max size check. If len(_result_cache) > 1000, clear it. Or convert process_job to use @functools.lru_cache(maxsize=1000).",
+    "Add `from functools import lru_cache` and decorate process_job with `@lru_cache(maxsize=1000)`. Or add `if len(_result_cache) > 1000: _result_cache.clear()` inside process_job before storing the result."
+  ]
+}

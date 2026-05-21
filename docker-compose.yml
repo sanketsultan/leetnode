@@ -3,6 +3,12 @@ services:
   backend:
     image: ${DOCKERHUB_USERNAME}/leetnode-backend:latest
     restart: unless-stopped
+    # t3.medium: 2 vCPU / 4 GB RAM
+    # Service budget: backend 192MB / frontend 256MB / nginx 32MB
+    # Problem containers: up to 10 x 256MB = 2.56GB concurrent max
+    mem_limit: 192m
+    memswap_limit: 192m
+    cpus: "0.4"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./problems:/problems:ro
@@ -12,13 +18,16 @@ services:
       WS_PORT: "3002"
       WS_PUBLIC_URL: wss://${DOMAIN}/ws
       FRONTEND_URL: https://${DOMAIN}
-      SESSION_TTL_MS: "1800000"
-      MAX_SESSIONS: "20"
+      SESSION_TTL_MS: "1200000"
+      MAX_SESSIONS: "10"
       DOCKER_SOCKET: /var/run/docker.sock
 
   frontend:
     image: ${DOCKERHUB_USERNAME}/leetnode-frontend:latest
     restart: unless-stopped
+    mem_limit: 256m
+    memswap_limit: 256m
+    cpus: "0.4"
     environment:
       NODE_ENV: production
       PORT: "3000"
@@ -27,6 +36,9 @@ services:
   nginx:
     image: nginx:alpine
     restart: unless-stopped
+    mem_limit: 32m
+    memswap_limit: 32m
+    cpus: "0.1"
     ports:
       - "80:80"
     volumes:
