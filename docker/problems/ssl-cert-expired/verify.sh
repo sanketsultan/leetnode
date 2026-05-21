@@ -30,3 +30,4 @@ sleep 1
 # Step 4: confirm nginx is serving the renewed cert
 EXPIRY=$(openssl x509 -in "$RENEWED_CRT" -noout -enddate 2>/dev/null | cut -d= -f2)
 echo "{\"success\": true, \"message\": \"nginx now serves the renewed certificate. Valid until: ${EXPIRY}\"}"
+exit 0

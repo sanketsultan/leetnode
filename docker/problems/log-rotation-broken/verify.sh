@@ -22,3 +22,4 @@ else
   echo '{"success": false, "message": "Config path looks right but rotation still failed. Run: logrotate -d /etc/logrotate.d/app to debug."}'
   exit 1
 fi
+exit 0

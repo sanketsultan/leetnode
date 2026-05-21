@@ -37,3 +37,4 @@ else
   echo "{\"success\": false, \"message\": \"nginx config looks right but the request still fails (HTTP ${HTTP_CODE:-000}). Did you reload nginx? Run: nginx -s reload\"}"
   exit 1
 fi
+exit 0

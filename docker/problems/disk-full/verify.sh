@@ -26,3 +26,4 @@ else
   echo "{\"success\": false, \"message\": \"Disk usage is ${SIZE_MB}MB but start_server.sh still fails. Something else is wrong.\"}"
   exit 1
 fi
+exit 0
