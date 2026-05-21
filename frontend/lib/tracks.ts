@@ -21,8 +21,8 @@ export const TRACKS: Track[] = [
     title: 'Production Operations',
     description: 'Disk crises, failed restarts, and the fires that wake your on-call rotation at 3am.',
     level: 'Beginner',
-    problemSlugs: ['disk-full', 'nginx-bad-gateway', 'log-rotation-broken'],
-    skills: ['Linux', 'nginx', 'Disk management', 'logrotate'],
+    problemSlugs: ['disk-full', 'nginx-bad-gateway', 'log-rotation-broken', 'cron-bad-path'],
+    skills: ['Linux', 'nginx', 'Disk management', 'logrotate', 'cron'],
   },
   {
     id: 'python-performance',
@@ -39,5 +39,13 @@ export const TRACKS: Track[] = [
     level: 'Beginner',
     problemSlugs: ['nginx-bad-gateway', 'ssl-cert-expired'],
     skills: ['nginx', 'HTTP', 'TLS', 'curl'],
+  },
+  {
+    id: 'data-layer',
+    title: 'Data Layer Debugging',
+    description: 'Redis OOM errors, Postgres connection exhaustion, and the cache bugs that only surface at scale.',
+    level: 'Intermediate',
+    problemSlugs: ['redis-oom', 'postgres-connections'],
+    skills: ['Redis', 'PostgreSQL', 'Connection pooling', 'Memory config'],
   },
 ];

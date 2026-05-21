@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import './globals.css';
 import PostHogProvider from '../components/PostHogProvider';
 import FeedbackButton from '../components/FeedbackButton';
+import AuthProvider from '../components/AuthProvider';
+import UserMenu from '../components/UserMenu';
 
 export const metadata: Metadata = {
   title: 'LeetNode: Infrastructure Debugging Platform',
@@ -23,13 +25,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <a href="/leaderboard" className="platform-nav-link">Leaderboard</a>
             </nav>
             <div className="platform-nav-actions">
-              <a href="/problems" className="platform-cta-btn">
-                Start practicing
-              </a>
+              <UserMenu />
             </div>
           </div>
         </header>
-        <PostHogProvider>{children}</PostHogProvider>
+        <AuthProvider>
+          <PostHogProvider>{children}</PostHogProvider>
+        </AuthProvider>
         <FeedbackButton />
       </body>
     </html>

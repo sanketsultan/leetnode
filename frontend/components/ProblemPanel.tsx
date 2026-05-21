@@ -2,10 +2,18 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import ReactMarkdown from 'react-markdown';
+import { useSession } from 'next-auth/react';
 import { Problem, verifySession } from '../lib/api';
 import { analytics } from '../lib/analytics';
 
-const SOLVED_KEY = 'leetnode:solved';
+const SOLVED_KEY  = 'leetnode:solved';
+const PROFILE_KEY = 'leetnode:profile'; // { login, avatar, solves: [{slug, solvedAt, elapsedS}] }
+
+interface LocalProfile {
+  login:  string;
+  avatar: string;
+  solves: Array<{ slug: string; difficulty: string; solvedAt: string; elapsedS: number }>;
+}
 
 // Hints unlock progressively — users can't just skip to the answer
 const HINT_UNLOCK_MINUTES = [0, 5, 10]; // hint i unlocks after this many minutes
@@ -87,6 +95,7 @@ export default function ProblemPanel({
   problem, sessionId, sessionStatus, errorMessage,
   sessionReadyAt, onReset, isResetting,
 }: ProblemPanelProps) {
+  const { data: session } = useSession();
   const [hintsRevealed,   setHintsRevealed ] = useState(0);
   const [showHints,       setShowHints      ] = useState(false);
   const [verifyStatus,    setVerifyStatus   ] = useState<'idle'|'checking'|'success'|'failed'>('idle');
@@ -130,12 +139,39 @@ export default function ProblemPanel({
     ? Math.max(0, (nextHintUnlockAt * 60000) - elapsedMs)
     : null;
 
-  function markSolved() {
+  function markSolved(elapsedS: number) {
     try {
+      // Legacy solved list (used by leaderboard component)
       const raw = localStorage.getItem(SOLVED_KEY);
       const solved: string[] = raw ? JSON.parse(raw) : [];
-      if (!solved.includes(problem.slug)) { solved.push(problem.slug); localStorage.setItem(SOLVED_KEY, JSON.stringify(solved)); }
+      if (!solved.includes(problem.slug)) {
+        solved.push(problem.slug);
+        localStorage.setItem(SOLVED_KEY, JSON.stringify(solved));
+      }
       setAlreadySolved(true);
+
+      // Rich profile record (includes user identity if signed in)
+      if (session?.user) {
+        const u = session.user as { login?: string; avatar?: string; name?: string; image?: string };
+        const profileRaw = localStorage.getItem(PROFILE_KEY);
+        const profile: LocalProfile = profileRaw ? JSON.parse(profileRaw) : {
+          login: u.login ?? u.name ?? 'you',
+          avatar: u.avatar ?? u.image ?? '',
+          solves: [],
+        };
+        // Update login/avatar in case they changed
+        profile.login  = u.login ?? u.name ?? profile.login;
+        profile.avatar = u.avatar ?? u.image ?? profile.avatar;
+        if (!profile.solves.find(s => s.slug === problem.slug)) {
+          profile.solves.push({
+            slug: problem.slug,
+            difficulty: problem.difficulty,
+            solvedAt: new Date().toISOString(),
+            elapsedS,
+          });
+        }
+        localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
+      }
     } catch {}
   }
 
@@ -158,7 +194,7 @@ export default function ProblemPanel({
       const elapsed = Math.round((Date.now() - sessionReadyAt) / 1000);
       if (result.success) {
         analytics.verifyPassed(problem.slug, elapsed);
-        markSolved();
+        markSolved(elapsed);
         if (confettiRef.current) spawnConfetti(confettiRef.current);
       } else {
         analytics.verifyFailed(problem.slug, result.message);

@@ -1,8 +1,16 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useSession, signIn } from 'next-auth/react';
 
-const SOLVED_KEY = 'leetnode:solved';
+const SOLVED_KEY  = 'leetnode:solved';
+const PROFILE_KEY = 'leetnode:profile';
+
+interface LocalProfile {
+  login:  string;
+  avatar: string;
+  solves: Array<{ slug: string; difficulty: string; solvedAt: string; elapsedS: number }>;
+}
 
 const MOCK_USERS = [
   { rank: 1,  handle: 'sre_phantom',    solved: 6, streak: 14, score: 1240, specialty: 'Networking' },
@@ -234,16 +242,27 @@ function LiveFeed() {
 }
 
 export default function LeaderboardPage() {
-  const [localSolved, setLocalSolved] = useState(0);
-  const [mounted, setMounted] = useState(false);
+  const { data: session } = useSession();
+  const [localSolved,  setLocalSolved ] = useState(0);
+  const [localProfile, setLocalProfile] = useState<LocalProfile | null>(null);
+  const [mounted,      setMounted      ] = useState(false);
 
   useEffect(() => {
     setMounted(true);
     try {
       const raw = localStorage.getItem(SOLVED_KEY);
       if (raw) setLocalSolved(JSON.parse(raw).length);
+      const profileRaw = localStorage.getItem(PROFILE_KEY);
+      if (profileRaw) setLocalProfile(JSON.parse(profileRaw));
     } catch {}
   }, []);
+
+  const isSignedIn = !!session?.user;
+  const userHandle = localProfile?.login
+    ?? (session?.user as { login?: string })?.login
+    ?? session?.user?.name
+    ?? 'you';
+  const userAvatar = localProfile?.avatar ?? session?.user?.image ?? null;
 
   const localScore = localSolved * 160;
   const localRankPosition = MOCK_USERS.findIndex(u => localScore > u.score);
@@ -294,23 +313,41 @@ export default function LeaderboardPage() {
           animation: 'fade-up 0.4s 0.1s both',
           position: 'relative', zIndex: 1,
         }}>
-          <div style={{
-            width: '36px', height: '36px', borderRadius: '50%',
-            background: 'var(--gradient)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: '0.875rem', fontWeight: 800, color: 'white', flexShrink: 0,
-          }}>
-            Y
-          </div>
+          {userAvatar ? (
+            <img src={userAvatar} alt={userHandle} width={36} height={36}
+              style={{ borderRadius: '50%', flexShrink: 0 }} />
+          ) : (
+            <div style={{
+              width: '36px', height: '36px', borderRadius: '50%',
+              background: 'var(--gradient)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: '0.875rem', fontWeight: 800, color: 'white', flexShrink: 0,
+            }}>
+              {userHandle[0]?.toUpperCase() ?? 'Y'}
+            </div>
+          )}
           <div>
             <div style={{ fontSize: '0.6875rem', color: '#a5b4fc', letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 700, marginBottom: '0.2rem' }}>
-              Your progress (this device)
+              {isSignedIn ? `@${userHandle}` : 'Your progress (this device)'}
             </div>
             <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>
               {localSolved} problems solved · estimated rank <span style={{ color: 'var(--text)', fontWeight: 700 }}>#{displayRank}</span> · {localScore.toLocaleString()} pts
             </div>
           </div>
-          <div style={{ marginLeft: 'auto' }}>
+          <div style={{ marginLeft: 'auto', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+            {!isSignedIn && (
+              <button
+                onClick={() => signIn('github')}
+                style={{
+                  fontSize: '0.75rem', padding: '0.375rem 0.875rem',
+                  background: 'none', border: '1px solid var(--border)',
+                  borderRadius: 6, color: 'var(--text-muted)', cursor: 'pointer',
+                  fontFamily: 'inherit', whiteSpace: 'nowrap',
+                }}
+                title="Sign in to persist your rank across devices">
+                Sign in to save rank
+              </button>
+            )}
             <a href="/problems" className="btn-outline" style={{ fontSize: '0.75rem', padding: '0.375rem 0.875rem' }}>
               Keep solving -&gt;
             </a>

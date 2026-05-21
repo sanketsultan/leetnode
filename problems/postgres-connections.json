@@ -1,0 +1,15 @@
+{
+  "slug": "postgres-connections",
+  "title": "Postgres: Too Many Clients Already",
+  "difficulty": "hard",
+  "category": "Database",
+  "tags": ["postgresql", "database", "connections", "config", "pooling"],
+  "dockerImage": "leetnode-problem-postgres-connections:latest",
+  "timeLimit": 1800,
+  "description": "## The Situation\n\nAfter provisioning a new Postgres instance with 'optimized' settings, your app started intermittently failing under load. The error is clear:\n\n```\nFATAL: sorry, too many clients already\n```\n\nYour application pool is configured for 25 connections. But at any load above a trickle, connections are refused.\n\n## Your Task\n\n1. Run the stress test to observe the failure\n2. Find the Postgres configuration responsible\n3. Fix it and restart Postgres\n4. Confirm all 15 concurrent workers connect successfully\n\n## Useful Commands\n\n```bash\n# Observe the failure\npython3 /home/user/stress_test.py\n\n# Connect to postgres directly\npsql -U appuser -d appdb\n\n# Inside psql:\nSHOW max_connections;\nSELECT count(*) FROM pg_stat_activity;\nSELECT * FROM pg_stat_activity;\n\\q\n\n# Find and edit the config\nps aux | grep postgres | head -3\nfind /etc/postgresql -name postgresql.conf\nnano /etc/postgresql/*/main/postgresql.conf\n\n# Apply and restart\nservice postgresql restart\n\n# Re-run the stress test\npython3 /home/user/stress_test.py\n```",
+  "hints": [
+    "The error 'too many clients already' is Postgres refusing new connections because it's at its configured limit — not because connections are leaking.",
+    "Run SHOW max_connections; inside psql to see the hard cap. Then check how many connections your app pool expects. Spot the mismatch.",
+    "Edit max_connections in /etc/postgresql/*/main/postgresql.conf. Set it to 100 or higher (remember: 3 are reserved for superusers). Then: service postgresql restart."
+  ]
+}
