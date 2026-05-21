@@ -87,9 +87,10 @@ jobs:
           cache-to: type=gha,scope=base,mode=max
 
       # Problem images — always push so EC2 can always pull them
+      # Uses plain docker build (not buildx) so it can see the locally-tagged base image
       - name: Build and push problem images
         run: |
-          # Pull base and retag without username prefix so Dockerfiles can find it
+          # Pull base and retag without username prefix so Dockerfiles' FROM works
           docker pull ${{ secrets.DOCKERHUB_USERNAME }}/leetnode-base:latest
           docker tag  ${{ secrets.DOCKERHUB_USERNAME }}/leetnode-base:latest leetnode-base:latest
 
@@ -97,12 +98,8 @@ jobs:
             name=$(basename "$dir")
             image="${{ secrets.DOCKERHUB_USERNAME }}/leetnode-problem-$name:latest"
             echo "Building $image..."
-            docker buildx build \
-              --push \
-              --cache-from type=gha,scope=$name \
-              --cache-to   type=gha,scope=$name,mode=max \
-              -t "$image" \
-              "$dir"
+            docker build -t "$image" "$dir"
+            docker push "$image"
           done
 
   # ── 3. Deploy Cloudflare Worker ────────────────────────────────────────────
