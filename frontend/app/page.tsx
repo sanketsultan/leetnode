@@ -221,45 +221,182 @@ export default async function HomePage() {
         <ProblemsClient initialProblems={problems} embedded />
       </section>
 
-      {/* ── Philosophy bento ────────────────────────────────────────────── */}
+      {/* ── Why LeetNode ─────────────────────────────────────────────────── */}
       <section style={{
         borderTop: '1px solid var(--border-subtle)',
         padding: '6rem 2rem',
         position: 'relative', zIndex: 1,
       }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-          <div style={{ marginBottom: '2.5rem' }}>
+
+          {/* Header */}
+          <div style={{ marginBottom: '3.5rem', textAlign: 'center' }}>
             <p className="section-label" style={{ marginBottom: '0.5rem' }}>Why LeetNode</p>
-            <h2 style={{ fontSize: '1.5rem', fontWeight: 700, letterSpacing: '-0.04em' }}>
-              Built different.
+            <h2 style={{ fontSize: 'clamp(1.5rem, 3vw, 2.25rem)', fontWeight: 800, letterSpacing: '-0.05em', marginBottom: '0.75rem' }}>
+              Learn by{' '}
+              <span className="gradient-text">actually doing it.</span>
             </h2>
+            <p style={{ fontSize: '0.9375rem', color: 'var(--text-muted)', maxWidth: '480px', margin: '0 auto', lineHeight: 1.7 }}>
+              No videos. No multiple choice. A real broken system and you have 30 minutes.
+            </p>
           </div>
+
+          {/* 3-step flow */}
+          <div className="step-grid" style={{ marginBottom: '4rem' }}>
+
+            {/* Step 1 */}
+            <div className="step-card">
+              <div style={{
+                fontSize: '0.5625rem', fontFamily: 'monospace', letterSpacing: '0.15em',
+                color: '#6366f1', fontWeight: 700, marginBottom: '1rem', opacity: 0.9,
+              }}>STEP 01</div>
+              <h3 style={{ fontSize: '1rem', fontWeight: 700, letterSpacing: '-0.03em', marginBottom: '0.5rem', color: 'var(--text)' }}>
+                Pick a broken system
+              </h3>
+              <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', lineHeight: 1.7, marginBottom: '1.25rem' }}>
+                Choose from real infra failures: OOM killed services, 502 gateways, GPU memory leaks, disk floods.
+              </p>
+              <div className="step-snippet">
+                <span style={{ color: '#4b5563' }}>$</span>{' '}
+                <span style={{ color: '#a5b4fc' }}>curl -sI</span>{' '}
+                <span style={{ color: '#fde68a' }}>http://api/health</span>
+                <br />
+                <span style={{ color: '#f87171' }}>HTTP/1.1 502 Bad Gateway</span>
+                <br />
+                <span style={{ color: '#374151', fontStyle: 'italic' }}># your problem starts here</span>
+              </div>
+            </div>
+
+            <div className="step-arrow">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <path d="M4 10h12M12 6l4 4-4 4" stroke="#4b5563" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
+
+            {/* Step 2 */}
+            <div className="step-card">
+              <div style={{
+                fontSize: '0.5625rem', fontFamily: 'monospace', letterSpacing: '0.15em',
+                color: '#8b5cf6', fontWeight: 700, marginBottom: '1rem', opacity: 0.9,
+              }}>STEP 02</div>
+              <h3 style={{ fontSize: '1rem', fontWeight: 700, letterSpacing: '-0.03em', marginBottom: '0.5rem', color: 'var(--text)' }}>
+                Debug in a live terminal
+              </h3>
+              <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', lineHeight: 1.7, marginBottom: '1.25rem' }}>
+                A real Linux container. Real logs. Real config files. The same commands you would run on a production box.
+              </p>
+              <div className="step-snippet">
+                <span style={{ color: '#4b5563' }}>$</span>{' '}
+                <span style={{ color: '#a5b4fc' }}>ss -tlnp</span>{' '}
+                <span style={{ color: '#9ca3af' }}>| grep node</span>
+                <br />
+                <span style={{ color: '#fde68a' }}>LISTEN 0 511 *:8081</span>
+                <br />
+                <span style={{ color: '#4b5563' }}>$</span>{' '}
+                <span style={{ color: '#a5b4fc' }}>grep proxy_pass</span>{' '}
+                <span style={{ color: '#9ca3af' }}>/etc/nginx/*.conf</span>
+                <br />
+                <span style={{ color: '#f87171' }}>proxy_pass 127.0.0.1:8080</span>
+                <span style={{ color: '#fbbf24' }}> # mismatch</span>
+              </div>
+            </div>
+
+            <div className="step-arrow">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <path d="M4 10h12M12 6l4 4-4 4" stroke="#4b5563" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
+
+            {/* Step 3 */}
+            <div className="step-card">
+              <div style={{
+                fontSize: '0.5625rem', fontFamily: 'monospace', letterSpacing: '0.15em',
+                color: '#22c55e', fontWeight: 700, marginBottom: '1rem', opacity: 0.9,
+              }}>STEP 03</div>
+              <h3 style={{ fontSize: '1rem', fontWeight: 700, letterSpacing: '-0.03em', marginBottom: '0.5rem', color: 'var(--text)' }}>
+                Verify your fix
+              </h3>
+              <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', lineHeight: 1.7, marginBottom: '1.25rem' }}>
+                Click verify. The backend runs the actual check inside the container. Pass or fail. No guessing, no partial credit.
+              </p>
+              <div className="step-snippet">
+                <span style={{ color: '#4b5563' }}>$</span>{' '}
+                <span style={{ color: '#a5b4fc' }}>curl -s</span>{' '}
+                <span style={{ color: '#fde68a' }}>http://api/health</span>
+                <br />
+                <span style={{ color: '#4ade80' }}>{`{"status":"ok","uptime":3721}`}</span>
+                <br />
+                <br />
+                <span style={{ color: '#22c55e', fontWeight: 700 }}>[PASS]</span>{' '}
+                <span style={{ color: '#4ade80' }}>Verified in 4m 12s</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Comparison table */}
           <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
             border: '1px solid var(--border)',
             borderRadius: 'var(--radius-xl)',
             overflow: 'hidden',
+            marginBottom: '2rem',
           }}>
+            {/* Table header */}
+            <div className="compare-row" style={{
+              background: 'var(--bg-card)',
+              borderBottom: '1px solid var(--border)',
+              fontWeight: 700,
+              fontSize: '0.6875rem',
+              letterSpacing: '0.06em',
+              textTransform: 'uppercase',
+              color: 'var(--text-faint)',
+            }}>
+              <span>What you get</span>
+              <span style={{ textAlign: 'center', color: '#a5b4fc' }}>LeetNode</span>
+              <span style={{ textAlign: 'center' }}>Video courses</span>
+              <span style={{ textAlign: 'center' }}>Quiz sites</span>
+            </div>
+
             {[
-              { title: 'Not a tutorial',  body: 'No guided steps. A broken system and a terminal. Exactly like production.', accent: '#6366f1' },
-              { title: 'Not a quiz',      body: 'The system either works or it does not. Verification runs the real thing, end to end.', accent: '#8b5cf6' },
-              { title: 'Not a course',    body: 'No videos, no slides. Ten minutes of actual debugging teaches more than an hour of watching.', accent: '#3b82f6' },
-              { title: 'Real skills',     body: 'The commands you run here are the commands you would run on a production server.', accent: '#06b6d4' },
-            ].map(({ title, body, accent }) => (
-              <div key={title} className="bento-card">
-                <div style={{
-                  width: '28px', height: '3px', borderRadius: '2px',
-                  background: accent, marginBottom: '1.25rem',
-                  boxShadow: `0 0 12px ${accent}99`,
-                }} />
-                <h3 style={{ fontSize: '0.9375rem', fontWeight: 700, letterSpacing: '-0.025em', marginBottom: '0.625rem', color: 'var(--text)' }}>
-                  {title}
-                </h3>
-                <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', lineHeight: 1.75 }}>{body}</p>
+              { feature: 'Real Linux environment',        leetnode: true,  video: false, quiz: false },
+              { feature: 'No setup required',             leetnode: true,  video: true,  quiz: true  },
+              { feature: 'Hands-on terminal access',      leetnode: true,  video: false, quiz: false },
+              { feature: 'Instant verified feedback',     leetnode: true,  video: false, quiz: true  },
+              { feature: 'Production-grade scenarios',    leetnode: true,  video: false, quiz: false },
+              { feature: 'Free to start',                 leetnode: true,  video: false, quiz: true  },
+            ].map(({ feature, leetnode, video, quiz }) => (
+              <div key={feature} className="compare-row">
+                <span style={{ color: 'var(--text-muted)', fontSize: '0.8125rem' }}>{feature}</span>
+                <span style={{ textAlign: 'center', fontSize: '0.875rem', color: leetnode ? '#4ade80' : '#374151' }}>
+                  {leetnode ? '+ yes' : '-'}
+                </span>
+                <span style={{ textAlign: 'center', fontSize: '0.875rem', color: video ? '#6b7280' : '#374151' }}>
+                  {video ? '~ maybe' : '- no'}
+                </span>
+                <span style={{ textAlign: 'center', fontSize: '0.875rem', color: quiz ? '#6b7280' : '#374151' }}>
+                  {quiz ? '~ partial' : '- no'}
+                </span>
               </div>
             ))}
           </div>
+
+          {/* Trust bar */}
+          <div className="trust-bar">
+            {[
+              { icon: '[ ]', label: 'Real Linux containers', sub: 'Docker, not a simulation' },
+              { icon: '<1s', label: 'Instant verification',  sub: 'Runs your actual fix' },
+              { icon: '/>_', label: 'Zero setup',            sub: 'Browser only, no install' },
+              { icon: '$0 ', label: 'Free to start',         sub: 'No account required' },
+            ].map(({ icon, label, sub }) => (
+              <div key={label} className="trust-bar-item">
+                <div className="trust-icon">{icon}</div>
+                <div>
+                  <div style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.02em' }}>{label}</div>
+                  <div style={{ fontSize: '0.6875rem', color: 'var(--text-faint)', marginTop: '0.125rem' }}>{sub}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+
         </div>
       </section>
 

@@ -86,6 +86,14 @@ a { text-decoration: none; color: inherit; }
   from { opacity: 0; transform: translateY(22px); }
   to   { opacity: 1; transform: translateY(0); }
 }
+@keyframes podium-in {
+  from { opacity: 0; transform: translateY(32px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes bar-grow {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
 @keyframes fade-in {
   from { opacity: 0; }
   to   { opacity: 1; }
@@ -484,9 +492,18 @@ a { text-decoration: none; color: inherit; }
   border-bottom: 1px solid var(--border);
 }
 .lb-row-you {
-  background: rgba(99,102,241,0.04);
-  border-top: 1px solid var(--border-accent);
-  border-bottom: 1px solid var(--border-accent);
+  background: linear-gradient(90deg, rgba(99,102,241,0.07) 0%, rgba(139,92,246,0.03) 100%);
+  border-top: 1px solid rgba(99,102,241,0.25);
+  border-bottom: none;
+  position: relative;
+}
+.lb-row-you::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 2px;
+  background: var(--gradient);
+  border-radius: 0 1px 1px 0;
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -645,6 +662,131 @@ a { text-decoration: none; color: inherit; }
 }
 .bento-card:hover { background: var(--bg-card-hover); }
 .bento-card:hover::after { transform: scaleX(1); }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   HOW IT WORKS - STEP CARDS
+══════════════════════════════════════════════════════════════════════════ */
+.step-grid {
+  display: grid;
+  grid-template-columns: 1fr 2.5rem 1fr 2.5rem 1fr;
+  align-items: start;
+  gap: 0;
+}
+@media (max-width: 860px) {
+  .step-grid {
+    grid-template-columns: 1fr;
+    gap: 1px;
+  }
+  .step-arrow { display: none; }
+}
+
+.step-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: 2rem;
+  transition: border-color 0.25s, background 0.25s, transform 0.25s, box-shadow 0.25s;
+  position: relative;
+  overflow: hidden;
+}
+.step-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--gradient);
+  opacity: 0;
+  transition: opacity 0.25s;
+  border-radius: inherit;
+  z-index: 0;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: xor;
+  -webkit-mask-composite: xor;
+  padding: 1px;
+}
+.step-card:hover {
+  background: var(--bg-card-hover);
+  transform: translateY(-3px);
+  box-shadow: 0 16px 48px rgba(99,102,241,0.1);
+}
+.step-card:hover::before { opacity: 0.5; }
+.step-card > * { position: relative; z-index: 1; }
+
+.step-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-top: 3.5rem;
+}
+
+/* Mini terminal snippet inside step cards */
+.step-snippet {
+  background: #060610;
+  border: 1px solid rgba(255,255,255,0.05);
+  border-radius: 0.5rem;
+  padding: 0.875rem 1rem;
+  margin-top: 1.5rem;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+  font-size: 0.6875rem;
+  line-height: 1.65;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   COMPARISON TABLE
+══════════════════════════════════════════════════════════════════════════ */
+.compare-row {
+  display: grid;
+  grid-template-columns: 1fr 7rem 9rem 9rem;
+  gap: 0;
+  padding: 0.75rem 1.25rem;
+  border-bottom: 1px solid var(--border-subtle);
+  align-items: center;
+  transition: background 0.15s;
+}
+.compare-row:hover { background: var(--bg-card-hover); }
+@media (max-width: 640px) {
+  .compare-row { grid-template-columns: 1fr 4rem 5rem 5rem; gap: 0; }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   TRUST BAR
+══════════════════════════════════════════════════════════════════════════ */
+.trust-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: var(--border-subtle);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  margin-top: 3rem;
+}
+@media (max-width: 640px) {
+  .trust-bar { grid-template-columns: repeat(2, 1fr); }
+}
+.trust-bar-item {
+  background: var(--bg-card);
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  transition: background 0.15s;
+}
+.trust-bar-item:hover { background: var(--bg-card-hover); }
+.trust-icon {
+  width: 40px; height: 40px;
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 0.625rem;
+  font-weight: 700;
+  color: #a5b4fc;
+  background: rgba(99,102,241,0.08);
+  border: 1px solid rgba(99,102,241,0.2);
+  letter-spacing: -0.03em;
+  white-space: nowrap;
+}
 
 /* ══════════════════════════════════════════════════════════════════════════
    GLOWING CTA CARD

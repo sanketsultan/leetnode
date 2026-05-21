@@ -5,6 +5,7 @@ import { initializeDocker, cleanupOrphanedContainers } from './services/dockerSe
 import { startWebSocketServer } from './ws/terminalHandler';
 import sessionsRouter from './routes/sessions';
 import problemsRouter from './routes/problems';
+import feedbackRouter from './routes/feedback';
 
 async function main() {
   // Initialize Docker connection
@@ -25,6 +26,7 @@ async function main() {
   // Routes
   app.use('/api/problems', problemsRouter);
   app.use('/api/sessions', sessionsRouter);
+  app.use('/api/feedback', feedbackRouter);
 
   // Start HTTP server
   app.listen(config.PORT, () => {

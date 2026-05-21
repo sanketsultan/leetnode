@@ -121,8 +121,19 @@ jobs:
             APP="/opt/leetnode"
             DH_USER="${{ secrets.DOCKERHUB_USERNAME }}"
 
-            echo "==> Pulling latest code"
+            echo "==> Writing .env"
             cd "$APP"
+            cat > .env <<'ENVEOF'
+DOCKERHUB_USERNAME=${{ secrets.DOCKERHUB_USERNAME }}
+DOMAIN=${{ secrets.DOMAIN }}
+SMTP_HOST=${{ secrets.SMTP_HOST }}
+SMTP_PORT=${{ secrets.SMTP_PORT }}
+SMTP_USER=${{ secrets.SMTP_USER }}
+SMTP_PASS=${{ secrets.SMTP_PASS }}
+FEEDBACK_TO=${{ secrets.FEEDBACK_TO }}
+ENVEOF
+
+            echo "==> Pulling latest code"
             git -c credential.helper='' \
                 -c http.extraheader="Authorization: Basic $(echo -n 'x:${{ secrets.GH_PAT }}' | base64)" \
                 fetch origin

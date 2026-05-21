@@ -12,6 +12,12 @@ export const config = {
   WS_PUBLIC_URL: process.env.WS_PUBLIC_URL || 'ws://localhost:3002',
   PROBLEMS_DIR: path.join(__dirname, '../..', 'problems'),
   DOCKER_SOCKET: process.env.DOCKER_SOCKET || getDockerSocket(),
+  // Email / feedback
+  SMTP_HOST: process.env.SMTP_HOST || '',
+  SMTP_PORT: parseInt(process.env.SMTP_PORT || '587', 10),
+  SMTP_USER: process.env.SMTP_USER || '',
+  SMTP_PASS: process.env.SMTP_PASS || '',
+  FEEDBACK_TO: process.env.FEEDBACK_TO || '',
 };
 
 function getDockerSocket(): string {

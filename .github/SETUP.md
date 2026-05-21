@@ -36,6 +36,11 @@ Go to: GitHub repo → Settings → Secrets → Actions → New secret
 | `DOCKERHUB_TOKEN` | Docker Hub access token (hub.docker.com → Account Settings → Security) |
 | `POSTHOG_KEY` | PostHog project API key (posthog.com) |
 | `DOMAIN` | `leetnode.io` |
+| `SMTP_HOST` | `smtp.gmail.com` (or your provider) |
+| `SMTP_PORT` | `587` |
+| `SMTP_USER` | Your Gmail address |
+| `SMTP_PASS` | Gmail App Password (not your real password) |
+| `FEEDBACK_TO` | Email address to receive feedback |
 
 ## 5. Push to main → auto deploys
 

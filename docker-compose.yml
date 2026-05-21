@@ -21,6 +21,12 @@ services:
       SESSION_TTL_MS: "1200000"
       MAX_SESSIONS: "10"
       DOCKER_SOCKET: /var/run/docker.sock
+      # Email / feedback — set in .env on the EC2 host
+      SMTP_HOST: "${SMTP_HOST:-}"
+      SMTP_PORT: "${SMTP_PORT:-587}"
+      SMTP_USER: "${SMTP_USER:-}"
+      SMTP_PASS: "${SMTP_PASS:-}"
+      FEEDBACK_TO: "${FEEDBACK_TO:-}"
 
   frontend:
     image: ${DOCKERHUB_USERNAME}/leetnode-frontend:latest
