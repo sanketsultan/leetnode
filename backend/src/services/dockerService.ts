@@ -60,7 +60,8 @@ function writeSandboxFiles(sessionId: string): SandboxFiles {
   const hostname = `/dev/shm/leetnode-hostname-${sessionId}`;
   const resolv   = `/dev/shm/leetnode-resolv-${sessionId}`;
 
-  fs.writeFileSync(hosts, '127.0.0.1\tlocalhost\n::1\t\tlocalhost\n', { mode: 0o644 });
+  // 'sandbox' must be in /etc/hosts or sudo fails with "unable to resolve host sandbox"
+  fs.writeFileSync(hosts, '127.0.0.1\tlocalhost\n127.0.0.1\tsandbox\n::1\t\tlocalhost\n', { mode: 0o644 });
   fs.writeFileSync(hostname, 'sandbox\n', { mode: 0o644 });
   fs.writeFileSync(resolv, '# sandbox — no external DNS\nnameserver 127.0.0.1\n', { mode: 0o644 });
 
