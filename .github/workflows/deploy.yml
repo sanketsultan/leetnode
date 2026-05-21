@@ -67,7 +67,7 @@ jobs:
           cache-from: type=gha,scope=frontend
           cache-to: type=gha,scope=frontend,mode=max
 
-      # Problem Docker images (only when docker/ files change)
+      # Base image — only when docker/ files change
       - name: Check for docker/ changes
         id: filter
         uses: dorny/paths-filter@v3
@@ -86,8 +86,8 @@ jobs:
           cache-from: type=gha,scope=base
           cache-to: type=gha,scope=base,mode=max
 
+      # Problem images — always push so EC2 can always pull them
       - name: Build and push problem images
-        if: steps.filter.outputs.docker == 'true'
         run: |
           for dir in docker/problems/*/; do
             name=$(basename "$dir")
