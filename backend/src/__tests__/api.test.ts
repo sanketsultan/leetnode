@@ -144,18 +144,36 @@ describe('Sessions API validation', () => {
     expect(res.status).toBe(404);
   });
 
-  it('GET /api/sessions/:id returns 404 for unknown session', async () => {
+  // Use a valid UUID v4 format that doesn't match any real session
+  const UNKNOWN_UUID = '00000000-0000-4000-8000-000000000000';
+
+  it('GET /api/sessions/:id returns 400 for invalid session ID format', async () => {
     const res = await request(app).get('/api/sessions/nonexistent-session-id');
+    expect(res.status).toBe(400);
+  });
+
+  it('GET /api/sessions/:id returns 404 for valid UUID that does not exist', async () => {
+    const res = await request(app).get(`/api/sessions/${UNKNOWN_UUID}`);
     expect(res.status).toBe(404);
   });
 
-  it('POST /api/sessions/:id/verify returns 404 for unknown session', async () => {
+  it('POST /api/sessions/:id/verify returns 400 for invalid session ID format', async () => {
     const res = await request(app).post('/api/sessions/nonexistent/verify');
+    expect(res.status).toBe(400);
+  });
+
+  it('POST /api/sessions/:id/verify returns 404 for valid UUID that does not exist', async () => {
+    const res = await request(app).post(`/api/sessions/${UNKNOWN_UUID}/verify`);
     expect(res.status).toBe(404);
   });
 
-  it('DELETE /api/sessions/:id returns 404 for unknown session', async () => {
+  it('DELETE /api/sessions/:id returns 400 for invalid session ID format', async () => {
     const res = await request(app).delete('/api/sessions/nonexistent');
+    expect(res.status).toBe(400);
+  });
+
+  it('DELETE /api/sessions/:id returns 404 for valid UUID that does not exist', async () => {
+    const res = await request(app).delete(`/api/sessions/${UNKNOWN_UUID}`);
     expect(res.status).toBe(404);
   });
 });

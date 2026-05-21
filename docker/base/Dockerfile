@@ -2,7 +2,7 @@ FROM ubuntu:22.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     bash \
     curl \
     wget \
@@ -19,18 +19,17 @@ RUN apt-get update && apt-get install -y \
     tree \
     && rm -rf /var/lib/apt/lists/*
 
-# Create non-root user
-RUN useradd -m -s /bin/bash user && \
-    echo "user ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+# Create non-root user with restricted sudo (only specific commands per-problem)
+RUN useradd -m -s /bin/bash user
 
 # Mock nvidia-smi and nvcc — copy from build context (avoids heredoc issues)
 COPY nvidia-smi /usr/local/bin/nvidia-smi
 COPY nvcc /usr/local/bin/nvcc
 RUN chmod +x /usr/local/bin/nvidia-smi /usr/local/bin/nvcc
 
-# Install PyTorch CPU-only (problems use mock GPU via nvidia-smi/nvcc)
-# Shared here so all problem images inherit the layer instead of each downloading 8GB
-RUN pip3 install --no-cache-dir torch==2.5.1 --index-url https://download.pytorch.org/whl/cpu
+# NOTE: PyTorch is NOT installed here.
+# ML problems (cuda-*) use leetnode-base-ml which adds torch on top.
+# This keeps non-ML problem images ~500MB smaller.
 
 WORKDIR /home/user
 USER user

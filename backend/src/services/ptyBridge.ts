@@ -30,8 +30,18 @@ export class PtyBridge {
       AttachStdout: true,
       AttachStderr: true,
       Tty: true,
-      Env: ['TERM=xterm-256color', 'COLORTERM=truecolor', 'HOME=/home/user'],
-      User: 'user',
+      // Run as root: problems require root-level operations (restart nginx,
+      // run logrotate, edit system configs). The container is the security
+      // boundary (no network, capped caps, memory/pid limits) — not the user.
+      User: 'root',
+      Env: [
+        'TERM=xterm-256color',
+        'COLORTERM=truecolor',
+        'HOME=/home/user',
+        'LOGNAME=user',
+        'USER=user',
+      ],
+      WorkingDir: '/home/user',
     });
 
     this.execInstance.start({ hijack: true, stdin: true }, (err, stream) => {

@@ -37,31 +37,43 @@ export async function cleanupOrphanedContainers(): Promise<void> {
   }
 }
 
-/**
- * Write a clean /etc/hosts file to the host's /dev/shm (tmpfs) so that
- * when it's bind-mounted into the container, `df -h` shows "tmpfs" at
- * /etc/hosts instead of "/dev/root" (which would leak EC2 disk info).
- *
- * The file is cleaned up when the container is destroyed.
- */
-function writeContainerHosts(sessionId: string): string {
-  const hostsPath = `/dev/shm/leetnode-hosts-${sessionId}`;
-  const content = [
-    '127.0.0.1\tlocalhost',
-    '::1\t\tlocalhost',
-    '',
-  ].join('\n');
-  fs.writeFileSync(hostsPath, content, { mode: 0o644 });
-  return hostsPath;
+// ── Host-info isolation ────────────────────────────────────────────────────────
+//
+// Docker bind-mounts /etc/hosts, /etc/hostname, and /etc/resolv.conf from the
+// host into every container. Because these files live on /dev/root (the EC2
+// EBS volume), `df -h` inside the container reveals the host device name and
+// disk usage — a security info leak.
+//
+// Fix: write sanitized versions of all three files to /dev/shm (host tmpfs,
+// shared into the backend container via docker-compose). Bind-mounting tmpfs
+// files means `df -h` shows "tmpfs" instead of "/dev/root". Files are cleaned
+// up when the container is destroyed.
+
+interface SandboxFiles {
+  hosts:    string;
+  hostname: string;
+  resolv:   string;
 }
 
-function cleanupContainerHosts(sessionId: string): void {
-  try {
-    fs.unlinkSync(`/dev/shm/leetnode-hosts-${sessionId}`);
-  } catch {
-    // ignore if already gone
+function writeSandboxFiles(sessionId: string): SandboxFiles {
+  const hosts    = `/dev/shm/leetnode-hosts-${sessionId}`;
+  const hostname = `/dev/shm/leetnode-hostname-${sessionId}`;
+  const resolv   = `/dev/shm/leetnode-resolv-${sessionId}`;
+
+  fs.writeFileSync(hosts, '127.0.0.1\tlocalhost\n::1\t\tlocalhost\n', { mode: 0o644 });
+  fs.writeFileSync(hostname, 'sandbox\n', { mode: 0o644 });
+  fs.writeFileSync(resolv, '# sandbox — no external DNS\nnameserver 127.0.0.1\n', { mode: 0o644 });
+
+  return { hosts, hostname, resolv };
+}
+
+function cleanupSandboxFiles(sessionId: string): void {
+  for (const suffix of ['hosts', 'hostname', 'resolv']) {
+    try { fs.unlinkSync(`/dev/shm/leetnode-${suffix}-${sessionId}`); } catch { /* already gone */ }
   }
 }
+
+// ── Container lifecycle ────────────────────────────────────────────────────────
 
 export async function createAndStartContainer(
   problemSlug: string,
@@ -70,36 +82,65 @@ export async function createAndStartContainer(
 ): Promise<{ containerId: string; containerName: string }> {
   const containerName = `leetnode-session-${sessionId}`;
 
-  // Write a clean hosts file on host tmpfs → prevents /dev/root from
-  // appearing in `df -h` inside the container (security: no EC2 disk info leak)
-  const hostsPath = writeContainerHosts(sessionId);
+  // Write sanitized /etc/hosts, /etc/hostname, /etc/resolv.conf on host tmpfs
+  const sandboxFiles = writeSandboxFiles(sessionId);
 
   const container = await docker.createContainer({
     Image: dockerImage,
     name: containerName,
-    Cmd: ['sleep', 'infinity'], // Keep container alive; terminal connects via exec
+    Cmd: ['sleep', 'infinity'], // Keep alive; terminal connects via exec
     Tty: false,
     OpenStdin: false,
     AttachStdin: false,
     AttachStdout: false,
     AttachStderr: false,
     HostConfig: {
-      // t3.medium budget: 4GB RAM / 2 vCPU shared across all services.
-      // Each problem container gets 256MB + 0.5 CPU max. With MAX_SESSIONS=10
-      // worst case is 2.56GB for containers, leaving ~1.4GB for OS + services.
-      Memory: 256 * 1024 * 1024,       // 256MB per container
-      MemorySwap: 256 * 1024 * 1024,   // No swap (swap = memory limit)
-      MemoryReservation: 64 * 1024 * 1024, // Soft limit: 64MB guaranteed
-      NanoCpus: 5e8,                   // 0.5 CPU max
-      PidsLimit: 64,                   // Prevent fork bombs
-      NetworkMode: 'none',             // No network access from sandbox
-      SecurityOpt: ['no-new-privileges'],
-      ReadonlyRootfs: false,           // Problems need to write files
+      // ── Resource limits (t3.medium: 2 vCPU / 4 GB) ──────────────────────
+      // Up to 10 concurrent sessions × 256 MB = 2.56 GB max for containers,
+      // leaving ~1.4 GB for OS + backend + frontend + nginx.
+      Memory:            256 * 1024 * 1024,  // 256 MB hard cap
+      MemorySwap:        256 * 1024 * 1024,  // 0 swap (swap = hard cap)
+      MemoryReservation:  64 * 1024 * 1024,  // 64 MB soft reserve
+      NanoCpus: 5e8,                         // 0.5 CPU max
+      PidsLimit: 64,                         // prevent fork bombs
+
+      // ── Network isolation ────────────────────────────────────────────────
+      NetworkMode: 'none',   // no external network; localhost still works
+
+      // ── Linux capability restrictions ────────────────────────────────────
+      // Drop the most dangerous capabilities. The container is the jail —
+      // users run as root inside (needed to restart services, edit configs),
+      // but they cannot escape via kernel exploits or raw hardware access.
+      CapDrop: [
+        'NET_ADMIN',      // no network interface manipulation
+        'NET_RAW',        // no raw sockets (can't craft packets)
+        'SYS_ADMIN',      // most dangerous — blocks mount, namespace ops, etc.
+        'SYS_MODULE',     // no kernel module loading
+        'SYS_RAWIO',      // no direct hardware I/O (ioperm/iopl)
+        'SYS_BOOT',       // no reboot/kexec
+        'LINUX_IMMUTABLE',// no setting immutable file flags
+        'MAC_ADMIN',      // no mandatory access control changes
+        'MAC_OVERRIDE',   // no MAC policy override
+      ],
+      // NET_BIND_SERVICE kept (nginx binds port 80 < 1024)
+      // SYS_PTRACE kept (strace is a core debugging tool for these problems)
+
+      // ── Other hardening ──────────────────────────────────────────────────
+      // no-new-privileges is intentionally OMITTED: problems require the
+      // terminal to run as root (to restart nginx, run logrotate, etc.) and
+      // no-new-privileges would also break sudo. The capability drops above
+      // are the defense-in-depth layer instead.
+      ReadonlyRootfs: false,  // problems need to write files
       AutoRemove: false,
-      // Bind a clean hosts file from host tmpfs (/dev/shm) so the container's
-      // /etc/hosts is backed by tmpfs, not /dev/root (EC2 root EBS volume).
-      // This prevents users from seeing host disk info via `df -h`.
-      Binds: [`${hostsPath}:/etc/hosts:ro`],
+
+      // ── Hide host filesystem from df -h ──────────────────────────────────
+      // Bind clean tmpfs-backed files over Docker's default bind mounts so
+      // that `df -h` shows "tmpfs" instead of "/dev/root" (EC2 EBS device).
+      Binds: [
+        `${sandboxFiles.hosts}:/etc/hosts:ro`,
+        `${sandboxFiles.hostname}:/etc/hostname:ro`,
+        `${sandboxFiles.resolv}:/etc/resolv.conf:ro`,
+      ],
     },
     Labels: {
       'com.leetnode.session': sessionId,
@@ -125,8 +166,8 @@ export async function destroyContainer(containerId: string, sessionId?: string):
   } catch (err) {
     console.warn(`[Docker] Failed to destroy container ${containerId.slice(0, 12)}:`, err);
   } finally {
-    // Clean up the tmpfs hosts file regardless of container destroy outcome
-    if (sessionId) cleanupContainerHosts(sessionId);
+    // Always clean up tmpfs files regardless of container destroy outcome
+    if (sessionId) cleanupSandboxFiles(sessionId);
   }
 }
 

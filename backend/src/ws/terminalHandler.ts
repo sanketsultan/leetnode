@@ -12,8 +12,10 @@ export function startWebSocketServer(): void {
     const url = new URL(req.url || '', `http://localhost:${config.WS_PORT}`);
     const sessionId = url.searchParams.get('sessionId');
 
-    if (!sessionId) {
-      ws.close(4000, 'Missing sessionId');
+    // Reject missing or malformed session IDs before touching any state
+    const UUID_V4 = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!sessionId || !UUID_V4.test(sessionId)) {
+      ws.close(4000, 'Missing or invalid sessionId');
       return;
     }
 

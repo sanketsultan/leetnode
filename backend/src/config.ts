@@ -15,6 +15,8 @@ export const config = {
   // Email / feedback (via Resend)
   RESEND_API_KEY: process.env.RESEND_API_KEY || '',
   FEEDBACK_TO:    process.env.FEEDBACK_TO    || '',
+  // Admin token for GET /api/sessions — leave empty to disable endpoint
+  ADMIN_SECRET:   process.env.ADMIN_SECRET   || '',
 };
 
 function getDockerSocket(): string {

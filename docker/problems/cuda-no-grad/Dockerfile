@@ -1,4 +1,4 @@
-FROM leetnode-base:latest
+FROM leetnode-base-ml:latest
 
 USER root
 

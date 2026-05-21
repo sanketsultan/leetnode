@@ -67,7 +67,7 @@ jobs:
           cache-from: type=gha,scope=frontend
           cache-to: type=gha,scope=frontend,mode=max
 
-      # Base image — only when docker/ files change
+      # Check if docker/ files changed (decides whether to rebuild base images)
       - name: Check for docker/ changes
         id: filter
         uses: dorny/paths-filter@v3
@@ -76,7 +76,8 @@ jobs:
             docker:
               - 'docker/**'
 
-      - name: Build and push base problem image
+      # Slim base — only when docker/ files change
+      - name: Build and push slim base image
         if: steps.filter.outputs.docker == 'true'
         uses: docker/build-push-action@v5
         with:
@@ -86,20 +87,34 @@ jobs:
           cache-from: type=gha,scope=base
           cache-to: type=gha,scope=base,mode=max
 
-      # Problem images — always push so EC2 can always pull them
-      # Uses plain docker build (not buildx) so it can see the locally-tagged base image
-      - name: Build and push problem images
+      # ML base (torch) — only when docker/ files change
+      # Uses plain docker build so it can see the locally-tagged slim base
+      - name: Build and push ML base image
+        if: steps.filter.outputs.docker == 'true'
         run: |
-          # Pull base and retag without username prefix so Dockerfiles' FROM works
           docker pull ${{ secrets.DOCKERHUB_USERNAME }}/leetnode-base:latest
           docker tag  ${{ secrets.DOCKERHUB_USERNAME }}/leetnode-base:latest leetnode-base:latest
+          docker build -t "${{ secrets.DOCKERHUB_USERNAME }}/leetnode-base-ml:latest" ./docker/base-ml
+          docker push "${{ secrets.DOCKERHUB_USERNAME }}/leetnode-base-ml:latest"
+
+      # Problem images — always build so EC2 always has the latest
+      # Uses plain docker build (not buildx) so it can see locally-tagged bases
+      - name: Build and push problem images
+        run: |
+          # Pull both bases and retag without username prefix so Dockerfiles' FROM works
+          docker pull ${{ secrets.DOCKERHUB_USERNAME }}/leetnode-base:latest
+          docker tag  ${{ secrets.DOCKERHUB_USERNAME }}/leetnode-base:latest leetnode-base:latest
+
+          docker pull ${{ secrets.DOCKERHUB_USERNAME }}/leetnode-base-ml:latest 2>/dev/null && \
+            docker tag "${{ secrets.DOCKERHUB_USERNAME }}/leetnode-base-ml:latest" leetnode-base-ml:latest || true
 
           for dir in docker/problems/*/; do
             name=$(basename "$dir")
             image="${{ secrets.DOCKERHUB_USERNAME }}/leetnode-problem-$name:latest"
-            echo "Building $image..."
+            echo "==> Building $image..."
             docker build -t "$image" "$dir"
             docker push "$image"
+            echo "Done: $name"
           done
 
   # ── 3. Deploy Cloudflare Worker ────────────────────────────────────────────
@@ -163,11 +178,21 @@ jobs:
                 fetch origin
             git reset --hard origin/$(git rev-parse --abbrev-ref HEAD)
 
-            echo "==> Pulling Docker images from Hub"
+            echo "==> Pruning stopped containers and unused images (frees disk space)"
+            docker container prune -f
+            docker image prune -af
+
+            echo "==> Pulling service images from Hub"
             docker pull "$DH_USER/leetnode-backend:latest"
             docker pull "$DH_USER/leetnode-frontend:latest"
-            docker pull "$DH_USER/leetnode-base:latest" 2>/dev/null && \
+
+            echo "==> Pulling base images and tagging for local use"
+            docker pull "$DH_USER/leetnode-base:latest" && \
               docker tag "$DH_USER/leetnode-base:latest" leetnode-base:latest || true
+            docker pull "$DH_USER/leetnode-base-ml:latest" && \
+              docker tag "$DH_USER/leetnode-base-ml:latest" leetnode-base-ml:latest || true
+
+            echo "==> Pulling problem images"
             for dir in docker/problems/*/; do
               name=$(basename "$dir")
               src="$DH_USER/leetnode-problem-$name:latest"
@@ -186,6 +211,8 @@ jobs:
 
             echo "==> Done at $(date)"
             docker compose ps
+            echo "==> Disk usage after deploy:"
+            df -h /
 
       - name: Notify success
         if: success()
