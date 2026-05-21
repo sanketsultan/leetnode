@@ -221,8 +221,8 @@ jobs:
               "FEEDBACK_TO=${{ secrets.FEEDBACK_TO }}" \
               "NEXTAUTH_URL=https://${{ secrets.DOMAIN }}" \
               "NEXTAUTH_SECRET=${{ secrets.NEXTAUTH_SECRET }}" \
-              "GITHUB_CLIENT_ID=${{ secrets.GH_CLIENT_ID }}" \
-              "GITHUB_CLIENT_SECRET=${{ secrets.GH_CLIENT_SECRET }}" > .env
+              "GH_CLIENT_ID=${{ secrets.GH_CLIENT_ID }}" \
+              "GH_CLIENT_SECRET=${{ secrets.GH_CLIENT_SECRET }}" > .env
 
             echo "==> Pulling latest code"
             git -c credential.helper='' \
