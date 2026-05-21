@@ -2,11 +2,9 @@ name       = "leetnode-feedback"
 main       = "src/index.ts"
 compatibility_date = "2024-09-23"
 
-# Route: intercepts POST /api/feedback on your domain at Cloudflare edge
-# The request never hits EC2
-[[routes]]
-pattern = "leetnode.io/api/feedback"
-zone_name = "leetnode.io"
+# Route is set manually in Cloudflare dashboard (Workers & Pages → leetnode-feedback → Settings → Triggers)
+# Pattern: leetnode.io/api/feedback  Zone: leetnode.io
+# Removing from here avoids needing Zone permission in the CI API token.
 
 # D1 database binding
 [[d1_databases]]
