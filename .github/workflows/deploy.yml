@@ -89,6 +89,10 @@ jobs:
       # Problem images — always push so EC2 can always pull them
       - name: Build and push problem images
         run: |
+          # Pull base and retag without username prefix so Dockerfiles can find it
+          docker pull ${{ secrets.DOCKERHUB_USERNAME }}/leetnode-base:latest
+          docker tag  ${{ secrets.DOCKERHUB_USERNAME }}/leetnode-base:latest leetnode-base:latest
+
           for dir in docker/problems/*/; do
             name=$(basename "$dir")
             image="${{ secrets.DOCKERHUB_USERNAME }}/leetnode-problem-$name:latest"
