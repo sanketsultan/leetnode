@@ -150,12 +150,11 @@ jobs:
 
             echo "==> Writing .env"
             cd "$APP"
-            cat > .env <<'ENVEOF'
-DOCKERHUB_USERNAME=${{ secrets.DOCKERHUB_USERNAME }}
-DOMAIN=${{ secrets.DOMAIN }}
-RESEND_API_KEY=${{ secrets.RESEND_API_KEY }}
-FEEDBACK_TO=${{ secrets.FEEDBACK_TO }}
-ENVEOF
+            printf '%s\n' \
+              "DOCKERHUB_USERNAME=${{ secrets.DOCKERHUB_USERNAME }}" \
+              "DOMAIN=${{ secrets.DOMAIN }}" \
+              "RESEND_API_KEY=${{ secrets.RESEND_API_KEY }}" \
+              "FEEDBACK_TO=${{ secrets.FEEDBACK_TO }}" > .env
 
             echo "==> Pulling latest code"
             git -c credential.helper='' \
