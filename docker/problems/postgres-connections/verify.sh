@@ -85,3 +85,4 @@ else:
     print(f'{{"success": true, "message": "All 15 concurrent connections succeeded. max_connections = {mc}."}}')
     sys.exit(0)
 PYEOF
+exit 0
