@@ -3,6 +3,7 @@ import ProblemsClient from './problems/client';
 import { TRACKS } from '../lib/tracks';
 import HeroTerminal from '../components/HeroTerminal';
 import SkillsTicker from '../components/SkillsTicker';
+import AnimatedTerminal, { TermLine } from '../components/AnimatedTerminal';
 
 export default async function HomePage() {
   let problems: Problem[] = [];
@@ -242,6 +243,7 @@ export default async function HomePage() {
           </div>
 
           {/* 3-step flow */}
+          {/* terminal line data – defined inline so page stays a Server Component */}
           <div className="step-grid" style={{ marginBottom: '4rem' }}>
 
             {/* Step 1 */}
@@ -256,15 +258,18 @@ export default async function HomePage() {
               <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', lineHeight: 1.7, marginBottom: '1.25rem' }}>
                 Choose from real infra failures: OOM killed services, 502 gateways, GPU memory leaks, disk floods.
               </p>
-              <div className="step-snippet">
-                <span style={{ color: '#4b5563' }}>$</span>{' '}
-                <span style={{ color: '#a5b4fc' }}>curl -sI</span>{' '}
-                <span style={{ color: '#fde68a' }}>http://api/health</span>
-                <br />
-                <span style={{ color: '#f87171' }}>HTTP/1.1 502 Bad Gateway</span>
-                <br />
-                <span style={{ color: '#374151', fontStyle: 'italic' }}># your problem starts here</span>
-              </div>
+              <AnimatedTerminal
+                delay={0}
+                lines={[
+                  [
+                    { text: '$ ',        color: '#4b5563' },
+                    { text: 'curl -sI ', color: '#a5b4fc' },
+                    { text: 'http://api/health', color: '#fde68a' },
+                  ],
+                  [{ text: 'HTTP/1.1 502 Bad Gateway', color: '#f87171' }],
+                  [{ text: '# your problem starts here', color: '#374151', italic: true }],
+                ]}
+              />
             </div>
 
             <div className="step-arrow">
@@ -285,20 +290,26 @@ export default async function HomePage() {
               <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', lineHeight: 1.7, marginBottom: '1.25rem' }}>
                 A real Linux container. Real logs. Real config files. The same commands you would run on a production box.
               </p>
-              <div className="step-snippet">
-                <span style={{ color: '#4b5563' }}>$</span>{' '}
-                <span style={{ color: '#a5b4fc' }}>ss -tlnp</span>{' '}
-                <span style={{ color: '#9ca3af' }}>| grep node</span>
-                <br />
-                <span style={{ color: '#fde68a' }}>LISTEN 0 511 *:8081</span>
-                <br />
-                <span style={{ color: '#4b5563' }}>$</span>{' '}
-                <span style={{ color: '#a5b4fc' }}>grep proxy_pass</span>{' '}
-                <span style={{ color: '#9ca3af' }}>/etc/nginx/*.conf</span>
-                <br />
-                <span style={{ color: '#f87171' }}>proxy_pass 127.0.0.1:8080</span>
-                <span style={{ color: '#fbbf24' }}> # mismatch</span>
-              </div>
+              <AnimatedTerminal
+                delay={300}
+                lines={[
+                  [
+                    { text: '$ ',          color: '#4b5563' },
+                    { text: 'ss -tlnp ',   color: '#a5b4fc' },
+                    { text: '| grep node', color: '#9ca3af' },
+                  ],
+                  [{ text: 'LISTEN 0 511 *:8081', color: '#fde68a' }],
+                  [
+                    { text: '$ ',               color: '#4b5563' },
+                    { text: 'grep proxy_pass ',  color: '#a5b4fc' },
+                    { text: '/etc/nginx/*.conf', color: '#9ca3af' },
+                  ],
+                  [
+                    { text: 'proxy_pass 127.0.0.1:8080', color: '#f87171' },
+                    { text: ' # mismatch',               color: '#fbbf24' },
+                  ],
+                ]}
+              />
             </div>
 
             <div className="step-arrow">
@@ -319,17 +330,22 @@ export default async function HomePage() {
               <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', lineHeight: 1.7, marginBottom: '1.25rem' }}>
                 Click verify. The backend runs the actual check inside the container. Pass or fail. No guessing, no partial credit.
               </p>
-              <div className="step-snippet">
-                <span style={{ color: '#4b5563' }}>$</span>{' '}
-                <span style={{ color: '#a5b4fc' }}>curl -s</span>{' '}
-                <span style={{ color: '#fde68a' }}>http://api/health</span>
-                <br />
-                <span style={{ color: '#4ade80' }}>{`{"status":"ok","uptime":3721}`}</span>
-                <br />
-                <br />
-                <span style={{ color: '#22c55e', fontWeight: 700 }}>[PASS]</span>{' '}
-                <span style={{ color: '#4ade80' }}>Verified in 4m 12s</span>
-              </div>
+              <AnimatedTerminal
+                delay={600}
+                lines={[
+                  [
+                    { text: '$ ',       color: '#4b5563' },
+                    { text: 'curl -s ', color: '#a5b4fc' },
+                    { text: 'http://api/health', color: '#fde68a' },
+                  ],
+                  [{ text: '{"status":"ok","uptime":3721}', color: '#4ade80' }],
+                  [{ text: ' ', color: '#4b5563' }],
+                  [
+                    { text: '[PASS] ', color: '#22c55e', bold: true },
+                    { text: 'Verified in 4m 12s', color: '#4ade80' },
+                  ],
+                ]}
+              />
             </div>
           </div>
 

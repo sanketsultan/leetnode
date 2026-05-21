@@ -728,7 +728,24 @@ a { text-decoration: none; color: inherit; }
   margin-top: 1.5rem;
   font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
   font-size: 0.6875rem;
-  line-height: 1.65;
+  line-height: 1.75;
+}
+
+/* Blinking block cursor for AnimatedTerminal */
+.term-cursor {
+  display: inline-block;
+  width: 7px;
+  height: 0.85em;
+  background: #a5b4fc;
+  margin-left: 1px;
+  vertical-align: text-bottom;
+  border-radius: 1px;
+  animation: cursor-blink 0.75s step-end infinite;
+}
+
+@keyframes cursor-blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
