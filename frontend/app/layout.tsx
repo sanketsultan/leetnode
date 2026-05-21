@@ -14,25 +14,26 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body style={{ background: 'var(--bg)', color: 'var(--text)', minHeight: '100vh' }}>
-        <header className="platform-header">
-          <div className="platform-header-inner">
-            <a href="/" className="platform-logo">
-              LeetNode
-            </a>
-            <nav className="platform-nav">
-              <a href="/problems" className="platform-nav-link">Problems</a>
-              <a href="/tracks" className="platform-nav-link">Tracks</a>
-              <a href="/leaderboard" className="platform-nav-link">Leaderboard</a>
-            </nav>
-            <div className="platform-nav-actions">
-              <UserMenu />
-            </div>
-          </div>
-        </header>
+        {/* AuthProvider must wrap the header too — UserMenu calls useSession() */}
         <AuthProvider>
+          <header className="platform-header">
+            <div className="platform-header-inner">
+              <a href="/" className="platform-logo">
+                LeetNode
+              </a>
+              <nav className="platform-nav">
+                <a href="/problems" className="platform-nav-link">Problems</a>
+                <a href="/tracks" className="platform-nav-link">Tracks</a>
+                <a href="/leaderboard" className="platform-nav-link">Leaderboard</a>
+              </nav>
+              <div className="platform-nav-actions">
+                <UserMenu />
+              </div>
+            </div>
+          </header>
           <PostHogProvider>{children}</PostHogProvider>
+          <FeedbackButton />
         </AuthProvider>
-        <FeedbackButton />
       </body>
     </html>
   );
