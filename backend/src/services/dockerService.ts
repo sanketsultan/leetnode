@@ -88,6 +88,9 @@ export async function createAndStartContainer(
   const container = await docker.createContainer({
     Image: dockerImage,
     name: containerName,
+    // Set kernel hostname so the shell prompt shows "sandbox" instead of
+    // the container ID (writing /etc/hostname alone doesn't change this)
+    Hostname: 'sandbox',
     Cmd: ['sleep', 'infinity'], // Keep alive; terminal connects via exec
     Tty: false,
     OpenStdin: false,
@@ -122,6 +125,13 @@ export async function createAndStartContainer(
         'MAC_ADMIN',      // no mandatory access control changes
         'MAC_OVERRIDE',   // no MAC policy override
       ],
+      // ── Disk size cap ────────────────────────────────────────────────────
+      // StorageOpt size limits the container's writable layer so `df -h /`
+      // shows a realistic sandbox size instead of the real EC2 disk (29G).
+      // Only works when Docker storage driver supports it (overlay2 + xfs/quota,
+      // or devicemapper). Silently ignored if unsupported — safe to include.
+      StorageOpt: { size: '10G' },
+
       // NET_BIND_SERVICE kept (nginx binds port 80 < 1024)
       // SYS_PTRACE kept (strace is a core debugging tool for these problems)
 
