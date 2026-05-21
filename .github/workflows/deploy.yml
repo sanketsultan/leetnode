@@ -260,8 +260,8 @@ jobs:
             echo "==> Restarting with Docker Compose"
             docker compose up -d --pull never
 
-            echo "==> Reloading nginx config"
-            docker compose exec -T nginx nginx -s reload || docker compose restart nginx
+            echo "==> Restarting nginx (re-opens bind mount after git reset)"
+            docker compose restart nginx
 
             echo "==> Done at $(date)"
             docker compose ps
