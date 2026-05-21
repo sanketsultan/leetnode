@@ -10,7 +10,7 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  # ── 1. Tests must pass ─────────────────────────────────────────────────────
+  # ── 1. Tests ────────────────────────────────────────────────────────────────
   test:
     name: Tests
     runs-on: ubuntu-latest
@@ -26,27 +26,22 @@ jobs:
       - run: cd backend && npm ci
       - run: cd backend && npm test -- --no-coverage --forceExit
 
-  # ── 2. Build & push all images ─────────────────────────────────────────────
-  build-images:
-    name: Build & push images
+  # ── 2a. Build backend (parallel with frontend) ──────────────────────────────
+  build-backend:
+    name: Build backend image
     runs-on: ubuntu-latest
     needs: test
-
     steps:
       - uses: actions/checkout@v4
 
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v3
+      - uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+      - uses: docker/setup-buildx-action@v3
 
-      # Backend
-      - name: Build and push backend
-        uses: docker/build-push-action@v5
+      - uses: docker/build-push-action@v5
         with:
           context: ./backend
           push: true
@@ -54,9 +49,22 @@ jobs:
           cache-from: type=gha,scope=backend
           cache-to: type=gha,scope=backend,mode=max
 
-      # Frontend — NEXT_PUBLIC_ vars baked in at build time
-      - name: Build and push frontend
-        uses: docker/build-push-action@v5
+  # ── 2b. Build frontend (parallel with backend) ──────────────────────────────
+  build-frontend:
+    name: Build frontend image
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/build-push-action@v5
         with:
           context: ./frontend
           push: true
@@ -67,7 +75,17 @@ jobs:
           cache-from: type=gha,scope=frontend
           cache-to: type=gha,scope=frontend,mode=max
 
-      # Check if docker/ files changed (decides whether to rebuild base images)
+  # ── 2c. Detect changes + enumerate problems (for matrix) ────────────────────
+  prepare-problems:
+    name: Prepare problem matrix
+    runs-on: ubuntu-latest
+    needs: test
+    outputs:
+      problems: ${{ steps.list.outputs.problems }}
+      docker_changed: ${{ steps.filter.outputs.docker }}
+    steps:
+      - uses: actions/checkout@v4
+
       - name: Check for docker/ changes
         id: filter
         uses: dorny/paths-filter@v3
@@ -76,9 +94,29 @@ jobs:
             docker:
               - 'docker/**'
 
-      # Slim base — only when docker/ files change
-      - name: Build and push slim base image
-        if: steps.filter.outputs.docker == 'true'
+      - name: List all problem directories
+        id: list
+        run: |
+          problems=$(ls -d docker/problems/*/ | xargs -I{} basename {} | jq -R . | jq -s -c .)
+          echo "problems=$problems" >> "$GITHUB_OUTPUT"
+
+  # ── 2d. Build base images (only when docker/ changed) ───────────────────────
+  build-base:
+    name: Build base images
+    runs-on: ubuntu-latest
+    needs: prepare-problems
+    if: needs.prepare-problems.outputs.docker_changed == 'true'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build and push slim base
         uses: docker/build-push-action@v5
         with:
           context: ./docker/base
@@ -87,42 +125,50 @@ jobs:
           cache-from: type=gha,scope=base
           cache-to: type=gha,scope=base,mode=max
 
-      # ML base (torch) — only when docker/ files change
-      # Uses plain docker build so it can see the locally-tagged slim base
-      - name: Build and push ML base image
-        if: steps.filter.outputs.docker == 'true'
+      - name: Build and push ML base (torch)
         run: |
           docker pull ${{ secrets.DOCKERHUB_USERNAME }}/leetnode-base:latest
           docker tag  ${{ secrets.DOCKERHUB_USERNAME }}/leetnode-base:latest leetnode-base:latest
           docker build -t "${{ secrets.DOCKERHUB_USERNAME }}/leetnode-base-ml:latest" ./docker/base-ml
           docker push "${{ secrets.DOCKERHUB_USERNAME }}/leetnode-base-ml:latest"
 
-      # Problem images — always build so EC2 always has the latest
-      # Uses plain docker build (not buildx) so it can see locally-tagged bases
-      - name: Build and push problem images
+  # ── 2e. Build problem images in parallel (one runner per problem) ────────────
+  build-problems:
+    name: Build problem — ${{ matrix.problem }}
+    runs-on: ubuntu-latest
+    needs: [prepare-problems, build-base]
+    # Run even if build-base was skipped (no docker/ changes)
+    if: always() && needs.prepare-problems.result == 'success' && (needs.build-base.result == 'success' || needs.build-base.result == 'skipped')
+    strategy:
+      fail-fast: false   # one failing problem doesn't cancel the rest
+      matrix:
+        problem: ${{ fromJson(needs.prepare-problems.outputs.problems) }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Pull base images
         run: |
-          # Pull both bases and retag without username prefix so Dockerfiles' FROM works
           docker pull ${{ secrets.DOCKERHUB_USERNAME }}/leetnode-base:latest
           docker tag  ${{ secrets.DOCKERHUB_USERNAME }}/leetnode-base:latest leetnode-base:latest
-
           docker pull ${{ secrets.DOCKERHUB_USERNAME }}/leetnode-base-ml:latest 2>/dev/null && \
             docker tag "${{ secrets.DOCKERHUB_USERNAME }}/leetnode-base-ml:latest" leetnode-base-ml:latest || true
 
-          for dir in docker/problems/*/; do
-            name=$(basename "$dir")
-            image="${{ secrets.DOCKERHUB_USERNAME }}/leetnode-problem-$name:latest"
-            echo "==> Building $image..."
-            docker build -t "$image" "$dir"
-            docker push "$image"
-            echo "Done: $name"
-          done
+      - name: Build and push ${{ matrix.problem }}
+        run: |
+          image="${{ secrets.DOCKERHUB_USERNAME }}/leetnode-problem-${{ matrix.problem }}:latest"
+          docker build -t "$image" "docker/problems/${{ matrix.problem }}/"
+          docker push "$image"
 
-  # ── 3. Deploy Cloudflare Worker ────────────────────────────────────────────
+  # ── 3. Deploy Cloudflare Worker (parallel with image builds) ────────────────
   deploy-worker:
     name: Deploy feedback Worker
     runs-on: ubuntu-latest
     needs: test
-
     steps:
       - uses: actions/checkout@v4
 
@@ -144,11 +190,13 @@ jobs:
           echo "https://leetnode.io"            | npx wrangler secret put ALLOWED_ORIGIN
           npx wrangler deploy
 
-  # ── 4. Deploy to EC2 ───────────────────────────────────────────────────────
+  # ── 4. Deploy to EC2 (after all images + worker ready) ──────────────────────
   deploy:
     name: Deploy to production
     runs-on: ubuntu-latest
-    needs: [build-images, deploy-worker]
+    needs: [build-backend, build-frontend, build-problems, deploy-worker]
+    # Deploy even if build-problems had individual failures (fail-fast:false)
+    if: always() && needs.build-backend.result == 'success' && needs.build-frontend.result == 'success' && needs.deploy-worker.result == 'success'
 
     steps:
       - uses: actions/checkout@v4
@@ -170,7 +218,11 @@ jobs:
               "DOCKERHUB_USERNAME=${{ secrets.DOCKERHUB_USERNAME }}" \
               "DOMAIN=${{ secrets.DOMAIN }}" \
               "RESEND_API_KEY=${{ secrets.RESEND_API_KEY }}" \
-              "FEEDBACK_TO=${{ secrets.FEEDBACK_TO }}" > .env
+              "FEEDBACK_TO=${{ secrets.FEEDBACK_TO }}" \
+              "NEXTAUTH_URL=https://${{ secrets.DOMAIN }}" \
+              "NEXTAUTH_SECRET=${{ secrets.NEXTAUTH_SECRET }}" \
+              "GITHUB_CLIENT_ID=${{ secrets.GITHUB_CLIENT_ID }}" \
+              "GITHUB_CLIENT_SECRET=${{ secrets.GITHUB_CLIENT_SECRET }}" > .env
 
             echo "==> Pulling latest code"
             git -c credential.helper='' \
@@ -182,11 +234,11 @@ jobs:
             docker container prune -f
             docker image prune -af
 
-            echo "==> Pulling service images from Hub"
+            echo "==> Pulling service images"
             docker pull "$DH_USER/leetnode-backend:latest"
             docker pull "$DH_USER/leetnode-frontend:latest"
 
-            echo "==> Pulling base images and tagging for local use"
+            echo "==> Pulling base images"
             docker pull "$DH_USER/leetnode-base:latest" && \
               docker tag "$DH_USER/leetnode-base:latest" leetnode-base:latest || true
             docker pull "$DH_USER/leetnode-base-ml:latest" && \
@@ -199,11 +251,10 @@ jobs:
               docker pull "$src" && docker tag "$src" "leetnode-problem-$name:latest" || true
             done
 
-            echo "==> Stopping host nginx (port 80 needed by Docker)"
+            echo "==> Stopping host nginx"
             sudo systemctl stop nginx || true
             sudo systemctl disable nginx || true
 
-            echo "==> Pulling nginx"
             docker pull nginx:alpine
 
             echo "==> Restarting with Docker Compose"
@@ -211,7 +262,6 @@ jobs:
 
             echo "==> Done at $(date)"
             docker compose ps
-            echo "==> Disk usage after deploy:"
             df -h /
 
       - name: Notify success
