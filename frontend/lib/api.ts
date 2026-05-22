@@ -1,3 +1,5 @@
+export type QualityId = 'system-thinking' | 'distribution' | 'perseverance' | 'curiosity';
+
 export interface Problem {
   slug: string;
   title: string;
@@ -8,6 +10,7 @@ export interface Problem {
   hints?: string[];
   dockerImage: string;
   timeLimit: number;
+  quality?: QualityId;
 }
 
 export interface SessionResponse {

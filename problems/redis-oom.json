@@ -3,13 +3,20 @@
   "title": "Redis OOM: maxmemory Too Low",
   "difficulty": "easy",
   "category": "Caching",
-  "tags": ["redis", "memory", "config", "cache", "oom"],
+  "tags": [
+    "redis",
+    "memory",
+    "config",
+    "cache",
+    "oom"
+  ],
   "dockerImage": "leetnode-problem-redis-oom:latest",
   "timeLimit": 900,
-  "description": "## The Situation\n\nYour API service uses Redis as a caching layer. Since this morning's deploy, every endpoint that touches the cache is returning 500 errors. The on-call alert is firing.\n\nRedis is running. The service is running. But every `SET` command fails with:\n\n```\n(error) OOM command not allowed when used memory > 'maxmemory'\n```\n\n## Your Task\n\n1. Confirm the failure with `redis-cli`\n2. Identify the broken configuration value\n3. Fix it and apply the change\n4. Verify writes succeed\n\n## Useful Commands\n\n```bash\n# Test a write — this is currently failing\nredis-cli set testkey testvalue\n\n# Inspect memory usage and config\nredis-cli info memory\ncat /etc/redis/redis.conf | grep maxmemory\n\n# Apply a live config change (no restart needed)\nredis-cli config set maxmemory 256mb\n\n# Or edit the file and restart\nnano /etc/redis/redis.conf\nservice redis-server restart\n\n# Run the app's cache test\npython3 /home/user/cache_test.py\n```",
+  "description": "## The Situation\n\nYour API service uses Redis as a caching layer. Since this morning's deploy, every endpoint that touches the cache is returning 500 errors. The on-call alert is firing.\n\nRedis is running. The service is running. But every `SET` command fails with:\n\n```\n(error) OOM command not allowed when used memory > 'maxmemory'\n```\n\n## Your Task\n\n1. Confirm the failure with `redis-cli`\n2. Identify the broken configuration value\n3. Fix it and apply the change\n4. Verify writes succeed\n\n## Useful Commands\n\n```bash\n# Test a write \u2014 this is currently failing\nredis-cli set testkey testvalue\n\n# Inspect memory usage and config\nredis-cli info memory\ncat /etc/redis/redis.conf | grep maxmemory\n\n# Apply a live config change (no restart needed)\nredis-cli config set maxmemory 256mb\n\n# Or edit the file and restart\nnano /etc/redis/redis.conf\nservice redis-server restart\n\n# Run the app's cache test\npython3 /home/user/cache_test.py\n```",
   "hints": [
-    "Redis is returning an OOM error, but the server itself has plenty of memory. The limit is self-imposed — look at how Redis is configured.",
-    "Check /etc/redis/redis.conf for the maxmemory setting. Also check the maxmemory-policy — together they define what Redis does when it's 'full'.",
+    "Redis is returning an OOM error, but the server itself has plenty of memory. The limit is self-imposed \u2014 look at how Redis is configured.",
+    "Check /etc/redis/redis.conf for the maxmemory setting. Also check the maxmemory-policy \u2014 together they define what Redis does when it's 'full'.",
     "Set maxmemory to a sane value (256mb or higher) in /etc/redis/redis.conf, then apply with: redis-cli config set maxmemory 256mb (live, no restart) or service redis-server restart."
-  ]
+  ],
+  "quality": "perseverance"
 }

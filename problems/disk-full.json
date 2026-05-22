@@ -3,7 +3,13 @@
   "title": "Server Won't Start: Disk Full",
   "difficulty": "easy",
   "category": "Linux",
-  "tags": ["disk", "storage", "logs", "linux", "bash"],
+  "tags": [
+    "disk",
+    "storage",
+    "logs",
+    "linux",
+    "bash"
+  ],
   "dockerImage": "leetnode-problem-disk-full:latest",
   "timeLimit": 900,
   "description": "## The Situation\n\nYour on-call alert fires at 2am. The application server is down and won't restart. The error is cryptic: `No space left on device`.\n\nLog rotation was supposed to clean up old logs automatically, but something broke last month and compressed log archives have been piling up in `/var/log/app/`.\n\nThe server startup script refuses to launch if disk usage in `/var/log/app/` exceeds **200MB**. You need to clean it up.\n\n## Your Task\n\n1. Investigate what's taking up space\n2. Identify and remove old log archives\n3. Confirm the server can start\n\n## Useful Commands\n\n```bash\n# Check what's taking up space\ndu -sh /var/log/app/*\ndu -sh /var/log/app/\n\n# List files by size\nls -lhS /var/log/app/\n\n# Find large files\nfind /var/log/app -name '*.gz' -size +10M\n\n# Try to start the server (currently fails)\n/home/user/start_server.sh\n\n# Delete files older than 30 days (example)\nfind /var/log/app -name '*.gz' -mtime +30 -delete\n```",
@@ -11,5 +17,6 @@
     "Run du -sh /var/log/app/* to see which files are taking up the most space.",
     "The compressed log archives (*.gz files) from previous months are the culprit. Old logs don't need to be kept.",
     "Delete the old .gz files from /var/log/app/ using rm or find -delete, then run /home/user/start_server.sh to verify."
-  ]
+  ],
+  "quality": "perseverance"
 }

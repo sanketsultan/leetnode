@@ -3,13 +3,20 @@
   "title": "Cron: Log Rotation Is Silently Failing",
   "difficulty": "medium",
   "category": "System",
-  "tags": ["cron", "bash", "logging", "path", "sysadmin"],
+  "tags": [
+    "cron",
+    "bash",
+    "logging",
+    "path",
+    "sysadmin"
+  ],
   "dockerImage": "leetnode-problem-cron-bad-path:latest",
   "timeLimit": 1200,
-  "description": "## The Situation\n\nYour log rotation job has been 'running' every 5 minutes for weeks. Except `/var/log/app/app.log` is now hundreds of megabytes — it has never actually been rotated.\n\nThe cron job shows up in `crontab -l`. The rotation script works when you call it directly. But the archives directory is empty.\n\n## Your Task\n\n1. Read the crontab and identify what's wrong\n2. Understand *why* it fails silently (no error emails, no logs)\n3. Fix the crontab entry\n4. Verify the script runs correctly\n\n## Useful Commands\n\n```bash\n# See the scheduled job\ncrontab -l\n\n# Check when logs were last rotated\ncat /var/log/rotate-status.log\nls -lh /var/log/app/archive/\n\n# Try running the script directly\nrotate-logs.sh               # try it this way first\n/usr/local/bin/rotate-logs.sh   # then try with full path\n\n# See where executables live\nwhich rotate-logs.sh 2>/dev/null || echo 'not in PATH'\nls -la /usr/local/bin/rotate-logs.sh\n\n# Edit the crontab\ncrontab -e\n```",
+  "description": "## The Situation\n\nYour log rotation job has been 'running' every 5 minutes for weeks. Except `/var/log/app/app.log` is now hundreds of megabytes \u2014 it has never actually been rotated.\n\nThe cron job shows up in `crontab -l`. The rotation script works when you call it directly. But the archives directory is empty.\n\n## Your Task\n\n1. Read the crontab and identify what's wrong\n2. Understand *why* it fails silently (no error emails, no logs)\n3. Fix the crontab entry\n4. Verify the script runs correctly\n\n## Useful Commands\n\n```bash\n# See the scheduled job\ncrontab -l\n\n# Check when logs were last rotated\ncat /var/log/rotate-status.log\nls -lh /var/log/app/archive/\n\n# Try running the script directly\nrotate-logs.sh               # try it this way first\n/usr/local/bin/rotate-logs.sh   # then try with full path\n\n# See where executables live\nwhich rotate-logs.sh 2>/dev/null || echo 'not in PATH'\nls -la /usr/local/bin/rotate-logs.sh\n\n# Edit the crontab\ncrontab -e\n```",
   "hints": [
-    "The script works when you call it directly but not from cron. The difference is the environment — specifically, what PATH is available.",
+    "The script works when you call it directly but not from cron. The difference is the environment \u2014 specifically, what PATH is available.",
     "Cron uses a minimal PATH: /usr/bin:/bin. Your script lives in /usr/local/bin. Cron simply can't find it by its short name.",
     "Fix the crontab entry to use the full path: replace 'rotate-logs.sh' with '/usr/local/bin/rotate-logs.sh'. Or add PATH=/usr/local/bin:/usr/bin:/bin as the first line of your crontab."
-  ]
+  ],
+  "quality": "system-thinking"
 }

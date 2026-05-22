@@ -1,15 +1,12 @@
 import { getProblems, Problem } from '../lib/api';
 import ProblemsClient from './problems/client';
-import { TRACKS } from '../lib/tracks';
+import { QUALITIES } from '../lib/tracks';
 import HeroTerminal from '../components/HeroTerminal';
-import SkillsTicker from '../components/SkillsTicker';
-import AnimatedTerminal, { TermLine } from '../components/AnimatedTerminal';
+import AnimatedTerminal from '../components/AnimatedTerminal';
 
 export default async function HomePage() {
   let problems: Problem[] = [];
   try { problems = await getProblems(); } catch {}
-
-  const categoryCount = new Set(problems.map(p => p.category)).size;
 
   return (
     <div style={{ color: 'var(--text)', position: 'relative', overflow: 'hidden' }}>
@@ -31,7 +28,7 @@ export default async function HomePage() {
         <div className="aurora-3" style={{
           position: 'absolute', bottom: '10%', left: '30%',
           width: '450px', height: '450px', borderRadius: '50%',
-          background: 'radial-gradient(ellipse, rgba(59,130,246,0.06) 0%, transparent 70%)',
+          background: 'radial-gradient(ellipse, rgba(6,182,212,0.06) 0%, transparent 70%)',
           filter: 'blur(50px)',
         }} />
       </div>
@@ -44,7 +41,7 @@ export default async function HomePage() {
           <div>
             <div className="hero-badge anim-fade-up">
               <span className="hero-badge-dot" />
-              Infrastructure Debugging Platform
+              Engineering Character Training Platform
             </div>
 
             <h1 className="anim-fade-up-1" style={{
@@ -54,9 +51,9 @@ export default async function HomePage() {
               letterSpacing: '-0.05em',
               marginBottom: '1.5rem',
             }}>
-              Debug production
+              Train the instincts
               <br />
-              <span className="gradient-text">before it pages you.</span>
+              <span className="gradient-text">great engineers have.</span>
             </h1>
 
             <p className="anim-fade-up-2" style={{
@@ -67,17 +64,17 @@ export default async function HomePage() {
               marginBottom: '2.25rem',
               letterSpacing: '-0.01em',
             }}>
-              Real broken systems. Live terminal.
-              Fix it and know immediately if you got it right.
-              No tutorials. No hand-holding. Just you and the logs.
+              Four qualities separate exceptional engineers from good ones.
+              We built real broken systems — one for each.
+              No tutorials. No hand-holding. Just you and the terminal.
             </p>
 
             <div className="anim-fade-up-3" style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '3rem' }}>
               <a href="/problems" className="btn-primary">
-                Browse problems
+                Start training
                 <span style={{ opacity: 0.75 }}>-&gt;</span>
               </a>
-              <a href="/tracks" className="btn-outline">View tracks</a>
+              <a href="#qualities" className="btn-outline">See the qualities</a>
             </div>
 
             {/* Stats row */}
@@ -91,10 +88,10 @@ export default async function HomePage() {
               overflow: 'hidden',
             }}>
               {[
-                { n: problems.length || '8', label: 'Problems' },
-                { n: categoryCount || '4',   label: 'Categories' },
-                { n: TRACKS.length,           label: 'Tracks' },
+                { n: problems.length || '11', label: 'Problems' },
+                { n: '4',                     label: 'Qualities' },
                 { n: '< 5s',                  label: 'Boot time' },
+                { n: '$0',                    label: 'To start' },
               ].map(({ n, label }) => (
                 <div key={label} className="hero-stat-card" style={{ borderRadius: 0, border: 'none', padding: '1rem' }}>
                   <div className="stat-number" style={{ fontSize: '1.625rem' }}>{n}</div>
@@ -104,38 +101,35 @@ export default async function HomePage() {
             </div>
           </div>
 
-          {/* Right column: animated terminal — offset slightly to optically match the headline */}
+          {/* Right column: animated terminal */}
           <div className="hero-terminal-col anim-fade-in" style={{ animationDelay: '0.2s', paddingTop: '0.5rem' }}>
             <HeroTerminal />
           </div>
         </div>
       </section>
 
-      {/* ── Tracks ──────────────────────────────────────────────────────── */}
-      <section style={{
+      {/* ── Four Qualities ──────────────────────────────────────────────── */}
+      <section id="qualities" style={{
         borderTop: '1px solid var(--border-subtle)',
-        padding: '5rem 2rem',
+        padding: '6rem 2rem',
         position: 'relative', zIndex: 1,
       }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-          <div style={{
-            display: 'flex', alignItems: 'flex-end',
-            justifyContent: 'space-between', marginBottom: '1.5rem',
-            flexWrap: 'wrap', gap: '1rem',
-          }}>
-            <div>
-              <p className="section-label" style={{ marginBottom: '0.5rem' }}>Learning paths</p>
-              <h2 style={{ fontSize: '1.5rem', fontWeight: 700, letterSpacing: '-0.04em' }}>
-                Pick your track.
-              </h2>
-            </div>
-            <a href="/tracks" className="btn-outline" style={{ fontSize: '0.75rem', padding: '0.3125rem 0.875rem' }}>
-              All tracks -&gt;
-            </a>
-          </div>
 
-          {/* Skills ticker — scrolls continuously, pauses on hover */}
-          <SkillsTicker />
+          <div style={{ marginBottom: '3.5rem' }}>
+            <p className="section-label" style={{ marginBottom: '0.5rem' }}>The four qualities</p>
+            <h2 style={{
+              fontSize: 'clamp(1.5rem, 3vw, 2.25rem)',
+              fontWeight: 800, letterSpacing: '-0.05em', marginBottom: '0.75rem',
+            }}>
+              What great engineers{' '}
+              <span className="gradient-text">have in common.</span>
+            </h2>
+            <p style={{ fontSize: '0.9375rem', color: 'var(--text-muted)', maxWidth: '520px', lineHeight: 1.7 }}>
+              Algorithms can be studied. These qualities have to be practiced.
+              Every problem on this platform develops one of them.
+            </p>
+          </div>
 
           <div style={{
             display: 'grid',
@@ -146,56 +140,72 @@ export default async function HomePage() {
             borderRadius: 'var(--radius-xl)',
             overflow: 'hidden',
           }}>
-            {TRACKS.map((track, i) => {
-              const count = track.problemSlugs.length;
+            {QUALITIES.map((q, i) => (
+              <a key={q.id} href={`/problems?quality=${q.id}`} className="track-card" style={{ position: 'relative' }}>
+                {/* Quality number */}
+                <div style={{
+                  fontSize: '0.6875rem', fontFamily: 'monospace',
+                  color: q.color, marginBottom: '1.25rem',
+                  letterSpacing: '0.1em', fontWeight: 700, opacity: 0.8,
+                }}>
+                  {String(i + 1).padStart(2, '0')}
+                </div>
 
-              // Representative command snippet per track — shown on card hover
-              const cmds: Record<string, string> = {
-                'gpu-ml':             '$ nvidia-smi | grep OOM',
-                'production-ops':     '$ df -h && journalctl -xe',
-                'python-performance': '$ python -m tracemalloc',
-                'networking':         '$ curl -vI https://api && openssl',
-              };
-              const cmd = cmds[track.id] ?? '$ ls -la';
+                {/* Title */}
+                <h3 style={{
+                  fontSize: '1.0625rem', fontWeight: 700,
+                  letterSpacing: '-0.03em', marginBottom: '0.375rem', color: 'var(--text)',
+                }}>
+                  {q.title}
+                </h3>
 
-              return (
-                <a key={track.id} href={`/tracks#${track.id}`} className="track-card">
-                  <div style={{
-                    fontSize: '0.6875rem', fontFamily: 'monospace',
-                    color: 'var(--text-faint)', marginBottom: '1.25rem',
-                    letterSpacing: '0.1em', fontWeight: 600,
-                  }}>
-                    {String(i + 1).padStart(2, '0')}
-                  </div>
-                  <h3 style={{
-                    fontSize: '1rem', fontWeight: 700,
-                    letterSpacing: '-0.03em', marginBottom: '0.625rem', color: 'var(--text)',
-                  }}>
-                    {track.title}
-                  </h3>
-                  <p style={{
-                    fontSize: '0.8125rem', color: 'var(--text-muted)',
-                    lineHeight: 1.7, marginBottom: '1.5rem',
-                  }}>
-                    {track.description}
-                  </p>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <span style={{
-                      fontSize: '0.6875rem', color: '#a5b4fc',
-                      background: 'var(--accent-dim)', border: '1px solid var(--border-accent)',
-                      padding: '0.1875rem 0.625rem', borderRadius: '999px', fontWeight: 500,
+                {/* Tagline */}
+                <p style={{
+                  fontSize: '0.75rem', color: q.color, fontStyle: 'italic',
+                  marginBottom: '0.875rem', letterSpacing: '-0.01em',
+                }}>
+                  {q.tagline}
+                </p>
+
+                {/* Description */}
+                <p style={{
+                  fontSize: '0.8125rem', color: 'var(--text-muted)',
+                  lineHeight: 1.7, marginBottom: '1.5rem',
+                }}>
+                  {q.description}
+                </p>
+
+                {/* Develops chips */}
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.375rem', marginBottom: '1.25rem' }}>
+                  {q.develops.map(d => (
+                    <span key={d} style={{
+                      fontSize: '0.625rem', padding: '0.1875rem 0.5rem',
+                      borderRadius: '4px', fontFamily: 'monospace',
+                      background: q.dimColor,
+                      color: q.color,
+                      border: `1px solid ${q.color}22`,
+                      letterSpacing: '0.02em',
                     }}>
-                      {count} {count === 1 ? 'problem' : 'problems'}
+                      {d}
                     </span>
-                    <span style={{ fontSize: '0.6875rem', color: 'var(--text-faint)', fontFamily: 'monospace' }}>
-                      {track.level}
-                    </span>
-                  </div>
-                  {/* Command preview — fades in on card hover via CSS */}
-                  <span className="track-cmd">{cmd}</span>
-                </a>
-              );
-            })}
+                  ))}
+                </div>
+
+                {/* Footer: problem count */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span style={{
+                    fontSize: '0.6875rem', color: q.color,
+                    background: q.dimColor, border: `1px solid ${q.color}33`,
+                    padding: '0.1875rem 0.625rem', borderRadius: '999px', fontWeight: 500,
+                  }}>
+                    {q.problemSlugs.length} {q.problemSlugs.length === 1 ? 'problem' : 'problems'}
+                  </span>
+                  <span style={{ fontSize: '0.6875rem', color: 'var(--text-faint)', fontFamily: 'monospace' }}>
+                    {q.cmd}
+                  </span>
+                </div>
+              </a>
+            ))}
           </div>
         </div>
       </section>
@@ -211,7 +221,7 @@ export default async function HomePage() {
             <div>
               <p className="section-label" style={{ marginBottom: '0.5rem' }}>Problem library</p>
               <h2 style={{ fontSize: '1.5rem', fontWeight: 700, letterSpacing: '-0.04em' }}>
-                Start solving.
+                Pick your problem.
               </h2>
             </div>
             <a href="/problems" className="btn-outline" style={{ fontSize: '0.75rem', padding: '0.3125rem 0.875rem' }}>
@@ -222,7 +232,7 @@ export default async function HomePage() {
         <ProblemsClient initialProblems={problems} embedded />
       </section>
 
-      {/* ── Why LeetNode ─────────────────────────────────────────────────── */}
+      {/* ── How it works ─────────────────────────────────────────────────── */}
       <section style={{
         borderTop: '1px solid var(--border-subtle)',
         padding: '6rem 2rem',
@@ -230,9 +240,8 @@ export default async function HomePage() {
       }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
 
-          {/* Header */}
           <div style={{ marginBottom: '3.5rem', textAlign: 'center' }}>
-            <p className="section-label" style={{ marginBottom: '0.5rem' }}>Why LeetNode</p>
+            <p className="section-label" style={{ marginBottom: '0.5rem' }}>How it works</p>
             <h2 style={{ fontSize: 'clamp(1.5rem, 3vw, 2.25rem)', fontWeight: 800, letterSpacing: '-0.05em', marginBottom: '0.75rem' }}>
               Learn by{' '}
               <span className="gradient-text">actually doing it.</span>
@@ -242,34 +251,22 @@ export default async function HomePage() {
             </p>
           </div>
 
-          {/* 3-step flow */}
-          {/* terminal line data – defined inline so page stays a Server Component */}
           <div className="step-grid" style={{ marginBottom: '4rem' }}>
 
-            {/* Step 1 */}
             <div className="step-card">
-              <div style={{
-                fontSize: '0.5625rem', fontFamily: 'monospace', letterSpacing: '0.15em',
-                color: '#6366f1', fontWeight: 700, marginBottom: '1rem', opacity: 0.9,
-              }}>STEP 01</div>
+              <div style={{ fontSize: '0.5625rem', fontFamily: 'monospace', letterSpacing: '0.15em', color: '#6366f1', fontWeight: 700, marginBottom: '1rem', opacity: 0.9 }}>STEP 01</div>
               <h3 style={{ fontSize: '1rem', fontWeight: 700, letterSpacing: '-0.03em', marginBottom: '0.5rem', color: 'var(--text)' }}>
-                Pick a broken system
+                Pick a quality to train
               </h3>
               <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', lineHeight: 1.7, marginBottom: '1.25rem' }}>
-                Choose from real infra failures: OOM killed services, 502 gateways, GPU memory leaks, disk floods.
+                Choose which engineering instinct to sharpen today. Each problem is designed to develop a specific quality.
               </p>
-              <AnimatedTerminal
-                delay={0}
-                lines={[
-                  [
-                    { text: '$ ',        color: '#4b5563' },
-                    { text: 'curl -sI ', color: '#a5b4fc' },
-                    { text: 'http://api/health', color: '#fde68a' },
-                  ],
-                  [{ text: 'HTTP/1.1 502 Bad Gateway', color: '#f87171' }],
-                  [{ text: '# your problem starts here', color: '#374151', italic: true }],
-                ]}
-              />
+              <AnimatedTerminal delay={0} lines={[
+                [{ text: '$ ', color: '#4b5563' }, { text: 'leetnode ', color: '#a5b4fc' }, { text: 'list --quality perseverance', color: '#fde68a' }],
+                [{ text: '→ disk-full       [easy]', color: '#4ade80' }],
+                [{ text: '→ redis-oom       [medium]', color: '#fbbf24' }],
+                [{ text: '→ cuda-oom        [hard]', color: '#f87171' }],
+              ]} />
             </div>
 
             <div className="step-arrow">
@@ -278,38 +275,20 @@ export default async function HomePage() {
               </svg>
             </div>
 
-            {/* Step 2 */}
             <div className="step-card">
-              <div style={{
-                fontSize: '0.5625rem', fontFamily: 'monospace', letterSpacing: '0.15em',
-                color: '#8b5cf6', fontWeight: 700, marginBottom: '1rem', opacity: 0.9,
-              }}>STEP 02</div>
+              <div style={{ fontSize: '0.5625rem', fontFamily: 'monospace', letterSpacing: '0.15em', color: '#8b5cf6', fontWeight: 700, marginBottom: '1rem', opacity: 0.9 }}>STEP 02</div>
               <h3 style={{ fontSize: '1rem', fontWeight: 700, letterSpacing: '-0.03em', marginBottom: '0.5rem', color: 'var(--text)' }}>
                 Debug in a live terminal
               </h3>
               <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', lineHeight: 1.7, marginBottom: '1.25rem' }}>
-                A real Linux container. Real logs. Real config files. The same commands you would run on a production box.
+                A real Linux container. Real logs. Real config files. The same commands you'd run on a production box.
               </p>
-              <AnimatedTerminal
-                delay={300}
-                lines={[
-                  [
-                    { text: '$ ',          color: '#4b5563' },
-                    { text: 'ss -tlnp ',   color: '#a5b4fc' },
-                    { text: '| grep node', color: '#9ca3af' },
-                  ],
-                  [{ text: 'LISTEN 0 511 *:8081', color: '#fde68a' }],
-                  [
-                    { text: '$ ',               color: '#4b5563' },
-                    { text: 'grep proxy_pass ',  color: '#a5b4fc' },
-                    { text: '/etc/nginx/*.conf', color: '#9ca3af' },
-                  ],
-                  [
-                    { text: 'proxy_pass 127.0.0.1:8080', color: '#f87171' },
-                    { text: ' # mismatch',               color: '#fbbf24' },
-                  ],
-                ]}
-              />
+              <AnimatedTerminal delay={300} lines={[
+                [{ text: '$ ', color: '#4b5563' }, { text: 'journalctl ', color: '#a5b4fc' }, { text: '-xe | tail -20', color: '#9ca3af' }],
+                [{ text: 'Job for redis.service failed', color: '#f87171' }],
+                [{ text: '$ ', color: '#4b5563' }, { text: 'cat ', color: '#a5b4fc' }, { text: '/etc/redis/redis.conf | grep max', color: '#9ca3af' }],
+                [{ text: 'maxmemory 1mb  ', color: '#f87171' }, { text: '# too low', color: '#fbbf24' }],
+              ]} />
             </div>
 
             <div className="step-arrow">
@@ -318,79 +297,44 @@ export default async function HomePage() {
               </svg>
             </div>
 
-            {/* Step 3 */}
             <div className="step-card">
-              <div style={{
-                fontSize: '0.5625rem', fontFamily: 'monospace', letterSpacing: '0.15em',
-                color: '#22c55e', fontWeight: 700, marginBottom: '1rem', opacity: 0.9,
-              }}>STEP 03</div>
+              <div style={{ fontSize: '0.5625rem', fontFamily: 'monospace', letterSpacing: '0.15em', color: '#22c55e', fontWeight: 700, marginBottom: '1rem', opacity: 0.9 }}>STEP 03</div>
               <h3 style={{ fontSize: '1rem', fontWeight: 700, letterSpacing: '-0.03em', marginBottom: '0.5rem', color: 'var(--text)' }}>
                 Verify your fix
               </h3>
               <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', lineHeight: 1.7, marginBottom: '1.25rem' }}>
-                Click verify. The backend runs the actual check inside the container. Pass or fail. No guessing, no partial credit.
+                Click verify. The backend runs the actual check inside the container. Pass or fail. No guessing.
               </p>
-              <AnimatedTerminal
-                delay={600}
-                lines={[
-                  [
-                    { text: '$ ',       color: '#4b5563' },
-                    { text: 'curl -s ', color: '#a5b4fc' },
-                    { text: 'http://api/health', color: '#fde68a' },
-                  ],
-                  [{ text: '{"status":"ok","uptime":3721}', color: '#4ade80' }],
-                  [{ text: ' ', color: '#4b5563' }],
-                  [
-                    { text: '[PASS] ', color: '#22c55e', bold: true },
-                    { text: 'Verified in 4m 12s', color: '#4ade80' },
-                  ],
-                ]}
-              />
+              <AnimatedTerminal delay={600} lines={[
+                [{ text: '$ ', color: '#4b5563' }, { text: 'redis-cli ', color: '#a5b4fc' }, { text: 'ping', color: '#fde68a' }],
+                [{ text: 'PONG', color: '#4ade80' }],
+                [{ text: ' ', color: '#4b5563' }],
+                [{ text: '[PASS] ', color: '#22c55e', bold: true }, { text: 'Perseverance +200pts', color: '#4ade80' }],
+              ]} />
             </div>
           </div>
 
           {/* Comparison table */}
-          <div style={{
-            border: '1px solid var(--border)',
-            borderRadius: 'var(--radius-xl)',
-            overflow: 'hidden',
-            marginBottom: '2rem',
-          }}>
-            {/* Table header */}
-            <div className="compare-row" style={{
-              background: 'var(--bg-card)',
-              borderBottom: '1px solid var(--border)',
-              fontWeight: 700,
-              fontSize: '0.6875rem',
-              letterSpacing: '0.06em',
-              textTransform: 'uppercase',
-              color: 'var(--text-faint)',
-            }}>
+          <div style={{ border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', overflow: 'hidden', marginBottom: '2rem' }}>
+            <div className="compare-row" style={{ background: 'var(--bg-card)', borderBottom: '1px solid var(--border)', fontWeight: 700, fontSize: '0.6875rem', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-faint)' }}>
               <span>What you get</span>
               <span style={{ textAlign: 'center', color: '#a5b4fc' }}>LeetNode</span>
               <span style={{ textAlign: 'center' }}>Video courses</span>
               <span style={{ textAlign: 'center' }}>Quiz sites</span>
             </div>
-
             {[
-              { feature: 'Real Linux environment',        leetnode: true,  video: false, quiz: false },
-              { feature: 'No setup required',             leetnode: true,  video: true,  quiz: true  },
-              { feature: 'Hands-on terminal access',      leetnode: true,  video: false, quiz: false },
-              { feature: 'Instant verified feedback',     leetnode: true,  video: false, quiz: true  },
-              { feature: 'Production-grade scenarios',    leetnode: true,  video: false, quiz: false },
-              { feature: 'Free to start',                 leetnode: true,  video: false, quiz: true  },
+              { feature: 'Trains real engineering instincts', leetnode: true,  video: false, quiz: false },
+              { feature: 'Real Linux environment',           leetnode: true,  video: false, quiz: false },
+              { feature: 'Instant verified feedback',        leetnode: true,  video: false, quiz: true  },
+              { feature: 'No setup required',                leetnode: true,  video: true,  quiz: true  },
+              { feature: 'Production-grade scenarios',       leetnode: true,  video: false, quiz: false },
+              { feature: 'Free to start',                    leetnode: true,  video: false, quiz: true  },
             ].map(({ feature, leetnode, video, quiz }) => (
               <div key={feature} className="compare-row">
                 <span style={{ color: 'var(--text-muted)', fontSize: '0.8125rem' }}>{feature}</span>
-                <span style={{ textAlign: 'center', fontSize: '0.875rem', color: leetnode ? '#4ade80' : '#374151' }}>
-                  {leetnode ? '+ yes' : '-'}
-                </span>
-                <span style={{ textAlign: 'center', fontSize: '0.875rem', color: video ? '#6b7280' : '#374151' }}>
-                  {video ? '~ maybe' : '- no'}
-                </span>
-                <span style={{ textAlign: 'center', fontSize: '0.875rem', color: quiz ? '#6b7280' : '#374151' }}>
-                  {quiz ? '~ partial' : '- no'}
-                </span>
+                <span style={{ textAlign: 'center', fontSize: '0.875rem', color: leetnode ? '#4ade80' : '#374151' }}>{leetnode ? '+ yes' : '-'}</span>
+                <span style={{ textAlign: 'center', fontSize: '0.875rem', color: video ? '#6b7280' : '#374151' }}>{video ? '~ maybe' : '- no'}</span>
+                <span style={{ textAlign: 'center', fontSize: '0.875rem', color: quiz ? '#6b7280' : '#374151' }}>{quiz ? '~ partial' : '- no'}</span>
               </div>
             ))}
           </div>
@@ -412,7 +356,6 @@ export default async function HomePage() {
               </div>
             ))}
           </div>
-
         </div>
       </section>
 
@@ -427,20 +370,16 @@ export default async function HomePage() {
               pointerEvents: 'none',
             }} />
             <p className="section-label" style={{ marginBottom: '1rem' }}>Ready to level up?</p>
-            <h2 style={{
-              fontSize: 'clamp(1.75rem, 4vw, 3rem)',
-              fontWeight: 800, letterSpacing: '-0.05em',
-              marginBottom: '1rem', position: 'relative',
-            }}>
-              Stop reading.{' '}
-              <span className="gradient-text">Start debugging.</span>
+            <h2 style={{ fontSize: 'clamp(1.75rem, 4vw, 3rem)', fontWeight: 800, letterSpacing: '-0.05em', marginBottom: '1rem', position: 'relative' }}>
+              Stop watching.{' '}
+              <span className="gradient-text">Start training.</span>
             </h2>
             <p style={{ fontSize: '0.9375rem', color: 'var(--text-muted)', marginBottom: '2.25rem', position: 'relative' }}>
               Your terminal is waiting. No setup, no account required.
             </p>
             <div style={{ display: 'flex', gap: '0.875rem', justifyContent: 'center', flexWrap: 'wrap', position: 'relative' }}>
               <a href="/problems" className="btn-primary">Pick a problem -&gt;</a>
-              <a href="/tracks" className="btn-outline">Browse tracks</a>
+              <a href="#qualities" className="btn-outline">See the qualities</a>
             </div>
           </div>
         </div>
@@ -462,7 +401,7 @@ export default async function HomePage() {
           </span>
           <div style={{ display: 'flex', gap: '1.5rem' }}>
             <a href="/problems" className="footer-link">Problems</a>
-            <a href="/tracks" className="footer-link">Tracks</a>
+            <a href="#qualities" className="footer-link">Qualities</a>
             <a href="/leaderboard" className="footer-link">Leaderboard</a>
           </div>
         </div>

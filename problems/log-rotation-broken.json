@@ -3,13 +3,19 @@
   "title": "Logs Never Rotate: Growing Forever",
   "difficulty": "easy",
   "category": "Linux",
-  "tags": ["logrotate", "linux", "cron", "sysadmin"],
+  "tags": [
+    "logrotate",
+    "linux",
+    "cron",
+    "sysadmin"
+  ],
   "dockerImage": "leetnode-problem-log-rotation-broken:latest",
   "timeLimit": 900,
-  "description": "## The Situation\n\nA service has been writing to `/var/log/app/service.log` for weeks. The file is now **2.4GB** and growing. Log rotation was configured but it's silently doing nothing.\n\nThe on-call engineer before you \"set up logrotate\" — but the logs are clearly not rotating. Something in the configuration is wrong.\n\n## Your Task\n\n1. Find why logrotate isn't rotating the logs\n2. Fix the configuration\n3. Force a rotation to confirm it works\n\n## Useful Commands\n\n```bash\n# Check the logrotate config\ncat /etc/logrotate.d/app\n\n# Test the config (dry run)\nlogrotate -d /etc/logrotate.d/app\n\n# Force rotation immediately\nlogrotate -f /etc/logrotate.d/app\n\n# Verify rotation happened\nls -lh /var/log/app/\n```",
+  "description": "## The Situation\n\nA service has been writing to `/var/log/app/service.log` for weeks. The file is now **2.4GB** and growing. Log rotation was configured but it's silently doing nothing.\n\nThe on-call engineer before you \"set up logrotate\" \u2014 but the logs are clearly not rotating. Something in the configuration is wrong.\n\n## Your Task\n\n1. Find why logrotate isn't rotating the logs\n2. Fix the configuration\n3. Force a rotation to confirm it works\n\n## Useful Commands\n\n```bash\n# Check the logrotate config\ncat /etc/logrotate.d/app\n\n# Test the config (dry run)\nlogrotate -d /etc/logrotate.d/app\n\n# Force rotation immediately\nlogrotate -f /etc/logrotate.d/app\n\n# Verify rotation happened\nls -lh /var/log/app/\n```",
   "hints": [
     "Run logrotate -d /etc/logrotate.d/app to debug. It will tell you exactly what it would do and why it might be skipping rotation.",
     "Logrotate skips files it can't find. Check the path in the config matches the actual log file location.",
-    "The config references /var/log/app/*.log but the file is named service.log — the path glob is correct. Look at the other settings: misuse/rotate/size can prevent rotation too. Check if the log file path in the config is exactly right."
-  ]
+    "The config references /var/log/app/*.log but the file is named service.log \u2014 the path glob is correct. Look at the other settings: misuse/rotate/size can prevent rotation too. Check if the log file path in the config is exactly right."
+  ],
+  "quality": "perseverance"
 }
