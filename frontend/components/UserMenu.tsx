@@ -127,15 +127,20 @@ export default function UserMenu() {
               @{handle}
             </div>
           </div>
-          <a href="/leaderboard" onClick={() => setOpen(false)} style={{
-            display: 'block', padding: '0.5rem 0.9rem',
-            fontSize: '0.8125rem', color: 'var(--text)',
-            textDecoration: 'none', transition: 'background 0.1s',
-          }}
-          onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-subtle)')}
-          onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
-            Leaderboard
-          </a>
+          {[
+            { href: '/profile',     label: 'My profile' },
+            { href: '/leaderboard', label: 'Leaderboard' },
+          ].map(({ href, label }) => (
+            <a key={href} href={href} onClick={() => setOpen(false)} style={{
+              display: 'block', padding: '0.5rem 0.9rem',
+              fontSize: '0.8125rem', color: 'var(--text)',
+              textDecoration: 'none', transition: 'background 0.1s',
+            }}
+            onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-subtle)')}
+            onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
+              {label}
+            </a>
+          ))}
           <button
             onClick={() => { setOpen(false); signOut(); }}
             style={{

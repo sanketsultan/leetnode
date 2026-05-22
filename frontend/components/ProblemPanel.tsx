@@ -139,9 +139,9 @@ export default function ProblemPanel({
     ? Math.max(0, (nextHintUnlockAt * 60000) - elapsedMs)
     : null;
 
-  function markSolved(elapsedS: number) {
+  async function markSolved(elapsedS: number) {
     try {
-      // Legacy solved list (used by leaderboard component)
+      // Local solved list (for instant UI feedback without auth)
       const raw = localStorage.getItem(SOLVED_KEY);
       const solved: string[] = raw ? JSON.parse(raw) : [];
       if (!solved.includes(problem.slug)) {
@@ -150,7 +150,7 @@ export default function ProblemPanel({
       }
       setAlreadySolved(true);
 
-      // Rich profile record (includes user identity if signed in)
+      // Cache profile locally for leaderboard/profile page
       if (session?.user) {
         const u = session.user as { login?: string; avatar?: string; name?: string; image?: string };
         const profileRaw = localStorage.getItem(PROFILE_KEY);
@@ -159,8 +159,7 @@ export default function ProblemPanel({
           avatar: u.avatar ?? u.image ?? '',
           solves: [],
         };
-        // Update login/avatar in case they changed
-        profile.login  = u.login ?? u.name ?? profile.login;
+        profile.login  = u.login  ?? u.name  ?? profile.login;
         profile.avatar = u.avatar ?? u.image ?? profile.avatar;
         if (!profile.solves.find(s => s.slug === problem.slug)) {
           profile.solves.push({
@@ -171,6 +170,18 @@ export default function ProblemPanel({
           });
         }
         localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
+
+        // Persist to server (fire-and-forget — don't block the UI)
+        fetch('/api/user/solves', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            slug:       problem.slug,
+            difficulty: problem.difficulty,
+            quality:    (problem as typeof problem & { quality?: string }).quality,
+            elapsedS,
+          }),
+        }).catch(() => {/* silently ignore — localStorage is the fallback */});
       }
     } catch {}
   }

@@ -13,6 +13,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./problems:/problems:ro
       - /dev/shm:/dev/shm   # share host tmpfs so backend can write clean hosts files for containers
+      - ./data:/app/data    # persistent solve storage
     environment:
       NODE_ENV: production
       PORT: "3001"

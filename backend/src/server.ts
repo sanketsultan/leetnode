@@ -8,6 +8,7 @@ import { startWebSocketServer } from './ws/terminalHandler';
 import sessionsRouter from './routes/sessions';
 import problemsRouter from './routes/problems';
 import feedbackRouter from './routes/feedback';
+import solvesRouter, { buildLeaderboard } from './routes/solves';
 
 async function main() {
   // Initialize Docker connection
@@ -65,9 +66,11 @@ async function main() {
   });
 
   // ── Routes ────────────────────────────────────────────────────────────────
-  app.use('/api/problems', problemsRouter);
-  app.use('/api/sessions', sessionCreateLimiter, sessionsRouter);
-  app.use('/api/feedback', feedbackLimiter,      feedbackRouter);
+  app.use('/api/problems',    problemsRouter);
+  app.use('/api/sessions',    sessionCreateLimiter, sessionsRouter);
+  app.use('/api/feedback',    feedbackLimiter,      feedbackRouter);
+  app.use('/api/solves',      solvesRouter);
+  app.get('/api/leaderboard', (_req, res) => res.json(buildLeaderboard()));
 
   // ── Start HTTP server ─────────────────────────────────────────────────────
   app.listen(config.PORT, () => {
