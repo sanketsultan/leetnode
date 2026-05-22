@@ -172,7 +172,7 @@ export default function LeaderboardPage() {
   }, []);
 
   const isSignedIn = !!session?.user;
-  const u = session?.user as { login?: string; image?: string; avatar?: string } | undefined;
+  const u = session?.user as { login?: string; name?: string; image?: string; avatar?: string } | undefined;
   const myLogin  = u?.login ?? u?.name ?? null;
   const myEntry  = myLogin ? entries.find(e => e.login === myLogin) : null;
   const myRank   = myEntry ? entries.indexOf(myEntry) + 1 : null;
