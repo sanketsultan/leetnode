@@ -4,6 +4,7 @@ import PostHogProvider from '../components/PostHogProvider';
 import FeedbackButton from '../components/FeedbackButton';
 import AuthProvider from '../components/AuthProvider';
 import UserMenu from '../components/UserMenu';
+import SupportButton from '../components/SupportButton';
 
 export const metadata: Metadata = {
   title: 'LeetNode: Infrastructure Debugging Platform',
@@ -26,7 +27,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <a href="/tracks" className="platform-nav-link">Tracks</a>
                 <a href="/leaderboard" className="platform-nav-link">Leaderboard</a>
               </nav>
-              <div className="platform-nav-actions">
+              <div className="platform-nav-actions" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <SupportButton variant="compact" />
                 <UserMenu />
               </div>
             </div>
