@@ -169,6 +169,7 @@ jobs:
     name: Deploy feedback Worker
     runs-on: ubuntu-latest
     needs: test
+    continue-on-error: true   # feedback worker failure must NOT block EC2 deploy
     steps:
       - uses: actions/checkout@v4
 
@@ -190,13 +191,14 @@ jobs:
           echo "https://leetnode.io"            | npx wrangler secret put ALLOWED_ORIGIN
           npx wrangler deploy
 
-  # ── 4. Deploy to EC2 (after all images + worker ready) ──────────────────────
+  # ── 4. Deploy to EC2 (after all images ready — worker failure is non-blocking) ─
   deploy:
     name: Deploy to production
     runs-on: ubuntu-latest
     needs: [build-backend, build-frontend, build-problems, deploy-worker]
     # Deploy even if build-problems had individual failures (fail-fast:false)
-    if: always() && needs.build-backend.result == 'success' && needs.build-frontend.result == 'success' && needs.deploy-worker.result == 'success'
+    # Worker failure is intentionally non-blocking — feedback is not core infra
+    if: always() && needs.build-backend.result == 'success' && needs.build-frontend.result == 'success'
 
     steps:
       - uses: actions/checkout@v4
