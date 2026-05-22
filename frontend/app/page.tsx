@@ -12,25 +12,25 @@ export default async function HomePage() {
   return (
     <div style={{ color: 'var(--text)', position: 'relative', overflow: 'hidden' }}>
 
-      {/* Aurora blobs */}
+      {/* Aurora blobs — subtle, not competing with content */}
       <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0 }}>
         <div className="aurora-1" style={{
           position: 'absolute', top: '-20%', left: '5%',
-          width: '650px', height: '650px', borderRadius: '50%',
-          background: 'radial-gradient(ellipse, rgba(99,102,241,0.13) 0%, transparent 70%)',
-          filter: 'blur(50px)',
+          width: '600px', height: '600px', borderRadius: '50%',
+          background: 'radial-gradient(ellipse, rgba(99,102,241,0.07) 0%, transparent 70%)',
+          filter: 'blur(60px)',
         }} />
         <div className="aurora-2" style={{
           position: 'absolute', top: '20%', right: '-10%',
-          width: '550px', height: '550px', borderRadius: '50%',
-          background: 'radial-gradient(ellipse, rgba(139,92,246,0.09) 0%, transparent 70%)',
-          filter: 'blur(50px)',
+          width: '500px', height: '500px', borderRadius: '50%',
+          background: 'radial-gradient(ellipse, rgba(139,92,246,0.05) 0%, transparent 70%)',
+          filter: 'blur(60px)',
         }} />
         <div className="aurora-3" style={{
           position: 'absolute', bottom: '10%', left: '30%',
-          width: '450px', height: '450px', borderRadius: '50%',
-          background: 'radial-gradient(ellipse, rgba(6,182,212,0.06) 0%, transparent 70%)',
-          filter: 'blur(50px)',
+          width: '400px', height: '400px', borderRadius: '50%',
+          background: 'radial-gradient(ellipse, rgba(6,182,212,0.04) 0%, transparent 70%)',
+          filter: 'blur(60px)',
         }} />
       </div>
 
@@ -124,7 +124,7 @@ export default async function HomePage() {
               fontWeight: 800, letterSpacing: '-0.05em', marginBottom: '0.75rem',
             }}>
               What great engineers{' '}
-              <span className="gradient-text">have in common.</span>
+              <span className="gradient-text-static">have in common.</span>
             </h2>
             <p style={{ fontSize: '0.9375rem', color: 'var(--text-muted)', maxWidth: '520px', lineHeight: 1.7 }}>
               Algorithms can be studied. These qualities have to be practiced.
@@ -245,7 +245,7 @@ export default async function HomePage() {
             <p className="section-label" style={{ marginBottom: '0.5rem' }}>How it works</p>
             <h2 style={{ fontSize: 'clamp(1.5rem, 3vw, 2.25rem)', fontWeight: 800, letterSpacing: '-0.05em', marginBottom: '0.75rem' }}>
               Learn by{' '}
-              <span className="gradient-text">actually doing it.</span>
+              <span className="gradient-text-static">actually doing it.</span>
             </h2>
             <p style={{ fontSize: '0.9375rem', color: 'var(--text-muted)', maxWidth: '480px', margin: '0 auto', lineHeight: 1.7 }}>
               No videos. No multiple choice. A real broken system and you have 30 minutes.
@@ -373,7 +373,7 @@ export default async function HomePage() {
             <p className="section-label" style={{ marginBottom: '1rem' }}>Ready to level up?</p>
             <h2 style={{ fontSize: 'clamp(1.75rem, 4vw, 3rem)', fontWeight: 800, letterSpacing: '-0.05em', marginBottom: '1rem', position: 'relative' }}>
               Stop watching.{' '}
-              <span className="gradient-text">Start training.</span>
+              <span className="gradient-text-static">Start training.</span>
             </h2>
             <p style={{ fontSize: '0.9375rem', color: 'var(--text-muted)', marginBottom: '2.25rem', position: 'relative' }}>
               Your terminal is waiting. No setup, no account required.

@@ -184,8 +184,8 @@ export default function ProblemsClient({ initialProblems, embedded = false }: Pr
         </div>
       ) : (
         <div>
-          {/* Column headers */}
-          <div className="problem-row" style={{ background: 'transparent', cursor: 'default' }}
+          {/* Column headers — hidden on mobile */}
+          <div className="problem-row problem-row-desktop-header" style={{ background: 'transparent', cursor: 'default' }}
             onMouseEnter={() => {}} onMouseLeave={() => {}}>
             {['#', 'Title', 'Quality', 'Difficulty', 'Time', ''].map((h, i) => (
               <div key={i} style={{

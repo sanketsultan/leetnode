@@ -229,32 +229,56 @@ export default function ProblemPanel({
     return '';
   }
 
+  const diffColor = difficultyColor[problem.difficulty] ?? '#6366f1';
+
   return (
     <div className="flex flex-col h-full" style={{ background: 'var(--bg)', position: 'relative', overflow: 'hidden' }}>
       {/* Confetti canvas */}
       <div ref={confettiRef} style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 50, overflow: 'hidden' }} />
 
+      {/* ── Difficulty accent bar ── */}
+      <div style={{ height: '3px', background: diffColor, opacity: 0.8, flexShrink: 0 }} />
+
       {/* ── Header ── */}
-      <div className="px-6 pt-5 pb-4" style={{ borderBottom: '1px solid var(--border)' }}>
-        <div className="flex items-center gap-2 mb-2">
-          <span className="text-xs font-medium capitalize"
-            style={{ color: difficultyColor[problem.difficulty] ?? 'var(--text-muted)' }}>
+      <div style={{ padding: '1.125rem 1.375rem 1rem', borderBottom: '1px solid var(--border)' }}>
+        {/* Meta row */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
+          <span style={{
+            fontSize: '0.6875rem', fontWeight: 700, textTransform: 'capitalize', letterSpacing: '0.03em',
+            color: diffColor, background: `${diffColor}15`, border: `1px solid ${diffColor}30`,
+            borderRadius: '4px', padding: '0.125rem 0.5rem',
+          }}>
             {problem.difficulty}
           </span>
-          <span style={{ color: 'var(--text-faint)' }}>·</span>
-          <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{problem.category}</span>
+          <span style={{ color: 'var(--text-faint)', fontSize: '0.75rem' }}>·</span>
+          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{problem.category}</span>
           {alreadySolved && (
-            <><span style={{ color: 'var(--text-faint)' }}>·</span>
-            <span className="text-xs font-medium" style={{ color: '#22c55e' }}>✓ Solved</span></>
+            <>
+              <span style={{ color: 'var(--text-faint)', fontSize: '0.75rem' }}>·</span>
+              <span style={{ fontSize: '0.6875rem', fontWeight: 600, color: '#22c55e', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                  <path d="M1.5 5.5L3.5 7.5L8.5 2.5" stroke="#22c55e" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                Solved
+              </span>
+            </>
           )}
         </div>
-        <h1 className="text-base font-semibold leading-snug mb-3" style={{ color: 'var(--text)' }}>
+
+        {/* Title */}
+        <h1 style={{ fontSize: '0.9375rem', fontWeight: 600, color: 'var(--text)', lineHeight: 1.4, marginBottom: '0.75rem', letterSpacing: '-0.02em' }}>
           {problem.title}
         </h1>
-        <div className="flex flex-wrap gap-1.5">
+
+        {/* Tags */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.375rem' }}>
           {problem.tags.map(tag => (
-            <span key={tag} className="text-xs font-mono px-1.5 py-0.5 rounded"
-              style={{ background: 'var(--border)', color: 'var(--text-muted)' }}>
+            <span key={tag} style={{
+              fontSize: '0.6875rem', fontFamily: 'monospace',
+              padding: '0.1875rem 0.5rem', borderRadius: '4px',
+              background: 'var(--bg-subtle)', color: 'var(--text-faint)',
+              border: '1px solid var(--border)',
+            }}>
               {tag}
             </span>
           ))}
@@ -262,26 +286,65 @@ export default function ProblemPanel({
       </div>
 
       {/* ── Status bar ── */}
-      <div className="px-6 py-2 flex items-center justify-between text-xs"
-        style={{ borderBottom: '1px solid var(--border-subtle)', background: 'var(--bg-subtle)' }}>
-        <div>
-          {sessionStatus === 'loading' && <span style={{ color: 'var(--text-muted)' }}>Starting container…</span>}
-          {sessionStatus === 'ready'   && (
-            <span className="flex items-center gap-1.5" style={{ color: 'var(--success)' }}>
-              <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ background: 'var(--success)' }} />
-              Connected
-            </span>
+      <div style={{
+        padding: '0.4375rem 1.375rem',
+        borderBottom: '1px solid var(--border-subtle)',
+        background: 'var(--bg-subtle)',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+      }}>
+        {/* Connection status */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.6875rem' }}>
+          {sessionStatus === 'loading' && (
+            <>
+              <span className="status-loading-dot" style={{
+                width: 7, height: 7, borderRadius: '50%', background: '#f59e0b', display: 'inline-block', flexShrink: 0,
+              }} />
+              <span style={{ color: 'var(--text-muted)' }}>Starting container…</span>
+            </>
           )}
-          {sessionStatus === 'error'   && <span style={{ color: 'var(--error)' }}>Error: {errorMessage}</span>}
-          {sessionStatus === 'idle'    && <span style={{ color: 'var(--text-faint)' }}>Initializing</span>}
-        </div>
-        <div className="flex items-center gap-3">
           {sessionStatus === 'ready' && (
-            <span className="font-mono" style={{ color: timeRemaining < 300000 ? 'var(--error)' : 'var(--text-muted)' }}>
-              {formatTime(timeRemaining)}
-            </span>
+            <>
+              <span style={{
+                width: 7, height: 7, borderRadius: '50%', background: '#22c55e', display: 'inline-block', flexShrink: 0,
+                boxShadow: '0 0 6px rgba(34,197,94,0.6)',
+              }} />
+              <span style={{ color: '#4ade80', fontWeight: 500 }}>Container ready</span>
+              {sessionId && (
+                <span style={{ color: 'var(--text-faint)', fontFamily: 'monospace', fontSize: '0.625rem' }}>
+                  · {sessionId.slice(0, 8)}
+                </span>
+              )}
+            </>
+          )}
+          {sessionStatus === 'error' && (
+            <>
+              <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#ef4444', display: 'inline-block', flexShrink: 0 }} />
+              <span style={{ color: 'var(--error)' }}>{errorMessage ?? 'Container error'}</span>
+            </>
+          )}
+          {sessionStatus === 'idle' && (
+            <>
+              <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--text-faint)', display: 'inline-block', flexShrink: 0 }} />
+              <span style={{ color: 'var(--text-faint)' }}>Initializing…</span>
+            </>
           )}
         </div>
+
+        {/* Timer */}
+        {sessionStatus === 'ready' && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', fontSize: '0.6875rem' }}>
+            <span style={{ color: 'var(--text-faint)', fontFamily: 'monospace' }}>
+              {formatTime(elapsedMs)} elapsed
+            </span>
+            <span style={{ color: 'var(--border)' }}>·</span>
+            <span style={{
+              fontFamily: 'monospace', fontWeight: 600,
+              color: timeRemaining < 300000 ? '#f87171' : timeRemaining < 600000 ? '#fbbf24' : 'var(--text-muted)',
+            }}>
+              {formatTime(timeRemaining)} left
+            </span>
+          </div>
+        )}
       </div>
 
       {/* ── Body: description + hints ── */}
@@ -387,56 +450,113 @@ export default function ProblemPanel({
       </div>
 
       {/* ── Verify + Reset ── */}
-      <div className="px-6 py-4" style={{ borderTop: '1px solid var(--border)' }}>
+      <div style={{ padding: '1rem 1.375rem', borderTop: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
+
+        {/* Success message */}
         {verifyStatus === 'success' && (
-          <div className="text-xs p-4 rounded-lg mb-3 leading-relaxed"
-            style={{ background: '#052e16', border: '1px solid #166534', color: '#4ade80' }}>
-            <div className="font-medium mb-1">✓ Problem solved!</div>
-            <div style={{ color: '#86efac', marginBottom: '0.75rem' }}>{verifyMessage}</div>
-            <div style={{ borderTop: '1px solid rgba(34,197,94,0.15)', paddingTop: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
-              <span style={{ color: 'rgba(134,239,172,0.6)', fontSize: '0.6875rem' }}>Enjoying LeetNode?</span>
+          <div style={{
+            borderRadius: '0.625rem',
+            background: 'linear-gradient(135deg, #052e16 0%, #041f10 100%)',
+            border: '1px solid rgba(34,197,94,0.3)',
+            overflow: 'hidden',
+          }}>
+            <div style={{ padding: '0.875rem 1rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.375rem' }}>
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                  <circle cx="7" cy="7" r="6.5" stroke="#22c55e" strokeOpacity="0.5"/>
+                  <path d="M4 7.5L5.5 9L10 4.5" stroke="#22c55e" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: '#4ade80' }}>Problem solved!</span>
+              </div>
+              <p style={{ fontSize: '0.75rem', color: '#86efac', lineHeight: 1.6, marginLeft: '1.375rem' }}>{verifyMessage}</p>
+            </div>
+            <div style={{ borderTop: '1px solid rgba(34,197,94,0.12)', padding: '0.625rem 1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(34,197,94,0.04)' }}>
+              <span style={{ fontSize: '0.6875rem', color: 'rgba(134,239,172,0.5)' }}>Enjoying LeetNode?</span>
               <SupportButton variant="compact" />
             </div>
           </div>
         )}
+
+        {/* Failure message */}
         {verifyStatus === 'failed' && (
-          <div className="text-xs p-3 rounded-lg mb-3 leading-relaxed"
-            style={{ background: '#1c0a09', border: '1px solid #7f1d1d', color: '#f87171' }}>
-            {verifyMessage}
+          <div style={{
+            padding: '0.75rem 1rem', borderRadius: '0.625rem',
+            background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)',
+            fontSize: '0.75rem', color: '#f87171', lineHeight: 1.6,
+            display: 'flex', gap: '0.625rem', alignItems: 'flex-start',
+          }}>
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ flexShrink: 0, marginTop: '0.125rem' }}>
+              <circle cx="7" cy="7" r="6.5" stroke="#ef4444" strokeOpacity="0.5"/>
+              <path d="M7 4v4M7 9.5v.5" stroke="#ef4444" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+            <span>{verifyMessage}</span>
           </div>
         )}
 
+        {/* Verify button */}
         <button
           onClick={handleVerify}
           disabled={!sessionId || sessionStatus !== 'ready' || verifyStatus === 'checking'}
-          className="w-full py-2.5 rounded-lg text-sm font-medium transition-all disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-2 mb-2"
-          style={{ background: verifyStatus === 'success' ? '#166534' : 'var(--accent)', color: '#fff' }}
-          onMouseEnter={e => { if (!e.currentTarget.disabled && verifyStatus !== 'success') e.currentTarget.style.background = 'var(--accent-hover)'; }}
-          onMouseLeave={e => { if (verifyStatus !== 'success') e.currentTarget.style.background = 'var(--accent)'; }}>
-          {verifyStatus === 'checking' ? 'Checking…' : verifyStatus === 'success' ? '✓ Solved' : 'Check Solution'}
+          className={verifyStatus === 'checking' ? 'verify-btn-checking' : ''}
+          style={{
+            width: '100%', padding: '0.6875rem 1rem',
+            borderRadius: '0.5rem',
+            fontSize: '0.875rem', fontWeight: 600,
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
+            transition: 'background 0.15s, opacity 0.15s',
+            cursor: (!sessionId || sessionStatus !== 'ready' || verifyStatus === 'checking') ? 'not-allowed' : 'pointer',
+            opacity: (!sessionId || sessionStatus !== 'ready' || verifyStatus === 'checking') && verifyStatus !== 'success' ? 0.4 : 1,
+            background: verifyStatus === 'success'
+              ? 'rgba(34,197,94,0.15)'
+              : verifyStatus === 'checking'
+              ? 'var(--accent)'
+              : 'var(--gradient)',
+            color: verifyStatus === 'success' ? '#4ade80' : '#fff',
+            border: verifyStatus === 'success' ? '1px solid rgba(34,197,94,0.3)' : 'none',
+          }}
+          onMouseEnter={e => {
+            if (!e.currentTarget.disabled && verifyStatus === 'idle' || verifyStatus === 'failed')
+              e.currentTarget.style.opacity = '0.88';
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.opacity = '1';
+          }}>
+          {verifyStatus === 'checking' && <span className="spinner" />}
+          {verifyStatus === 'checking' ? 'Running check…'
+            : verifyStatus === 'success' ? '✓ Verified — nice work'
+            : 'Check my solution'}
         </button>
 
         {/* Reset button */}
         <button
           onClick={onReset}
           disabled={isResetting || sessionStatus === 'loading'}
-          className="w-full py-2 rounded-lg text-xs transition-all disabled:opacity-30 disabled:cursor-not-allowed"
           style={{
+            width: '100%', padding: '0.5rem 1rem',
+            borderRadius: '0.5rem', fontSize: '0.75rem',
             background: 'none',
-            border: '1px solid rgba(248,113,113,0.15)',
-            color: 'rgba(248,113,113,0.5)',
+            border: '1px solid rgba(248,113,113,0.12)',
+            color: 'rgba(248,113,113,0.4)',
+            transition: 'all 0.15s',
+            cursor: (isResetting || sessionStatus === 'loading') ? 'not-allowed' : 'pointer',
+            opacity: (isResetting || sessionStatus === 'loading') ? 0.4 : 1,
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.375rem',
           }}
           onMouseEnter={e => {
             if (!e.currentTarget.disabled) {
-              (e.currentTarget as HTMLElement).style.borderColor = 'rgba(248,113,113,0.4)';
+              (e.currentTarget as HTMLElement).style.borderColor = 'rgba(248,113,113,0.35)';
               (e.currentTarget as HTMLElement).style.color = '#f87171';
+              (e.currentTarget as HTMLElement).style.background = 'rgba(248,113,113,0.05)';
             }
           }}
           onMouseLeave={e => {
-            (e.currentTarget as HTMLElement).style.borderColor = 'rgba(248,113,113,0.15)';
-            (e.currentTarget as HTMLElement).style.color = 'rgba(248,113,113,0.5)';
+            (e.currentTarget as HTMLElement).style.borderColor = 'rgba(248,113,113,0.12)';
+            (e.currentTarget as HTMLElement).style.color = 'rgba(248,113,113,0.4)';
+            (e.currentTarget as HTMLElement).style.background = 'none';
           }}>
-          {isResetting ? '↺ Resetting container…' : '↺ Reset to original broken state'}
+          {isResetting
+            ? <><span className="spinner" style={{ borderTopColor: '#f87171', borderColor: 'rgba(248,113,113,0.2)' }} /> Resetting…</>
+            : '↺ Reset to broken state'}
         </button>
       </div>
     </div>
