@@ -3,6 +3,7 @@ import ProblemsClient from './problems/client';
 import { QUALITIES } from '../lib/tracks';
 import HeroTerminal from '../components/HeroTerminal';
 import AnimatedTerminal from '../components/AnimatedTerminal';
+import SupportButton from '../components/SupportButton';
 
 export default async function HomePage() {
   let problems: Problem[] = [];
@@ -399,10 +400,11 @@ export default async function HomePage() {
           }}>
             LeetNode
           </span>
-          <div style={{ display: 'flex', gap: '1.5rem' }}>
+          <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
             <a href="/problems" className="footer-link">Problems</a>
             <a href="#qualities" className="footer-link">Qualities</a>
             <a href="/leaderboard" className="footer-link">Leaderboard</a>
+            <SupportButton variant="compact" />
           </div>
         </div>
       </footer>

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useSession, signIn } from 'next-auth/react';
 import { QUALITIES, QUALITY_MAP } from '../../lib/tracks';
 import type { QualityId } from '../../lib/api';
+import SupportButton from '../../components/SupportButton';
 
 interface Solve {
   slug:       string;
@@ -96,7 +97,8 @@ export default function ProfilePage() {
           <p style={{ fontSize: '0.6875rem', color: 'var(--text-faint)', letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 700, marginBottom: '0.25rem' }}>GitHub Profile</p>
           <h1 style={{ fontSize: '1.75rem', fontWeight: 800, letterSpacing: '-0.05em', lineHeight: 1.1 }}>@{login}</h1>
         </div>
-        <div style={{ marginLeft: 'auto', display: 'flex', gap: '0.5rem' }}>
+        <div style={{ marginLeft: 'auto', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+          <SupportButton variant="compact" />
           <a href="/leaderboard" className="btn-outline" style={{ fontSize: '0.75rem', padding: '0.375rem 0.875rem' }}>Leaderboard</a>
           <a href="/problems" className="btn-primary" style={{ fontSize: '0.75rem', padding: '0.375rem 0.875rem' }}>Keep solving -&gt;</a>
         </div>

@@ -5,6 +5,7 @@ import ReactMarkdown from 'react-markdown';
 import { useSession } from 'next-auth/react';
 import { Problem, verifySession } from '../lib/api';
 import { analytics } from '../lib/analytics';
+import SupportButton from './SupportButton';
 
 const SOLVED_KEY  = 'leetnode:solved';
 const PROFILE_KEY = 'leetnode:profile'; // { login, avatar, solves: [{slug, solvedAt, elapsedS}] }
@@ -391,7 +392,11 @@ export default function ProblemPanel({
           <div className="text-xs p-4 rounded-lg mb-3 leading-relaxed"
             style={{ background: '#052e16', border: '1px solid #166534', color: '#4ade80' }}>
             <div className="font-medium mb-1">✓ Problem solved!</div>
-            <div style={{ color: '#86efac' }}>{verifyMessage}</div>
+            <div style={{ color: '#86efac', marginBottom: '0.75rem' }}>{verifyMessage}</div>
+            <div style={{ borderTop: '1px solid rgba(34,197,94,0.15)', paddingTop: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
+              <span style={{ color: 'rgba(134,239,172,0.6)', fontSize: '0.6875rem' }}>Enjoying LeetNode?</span>
+              <SupportButton variant="compact" />
+            </div>
           </div>
         )}
         {verifyStatus === 'failed' && (
