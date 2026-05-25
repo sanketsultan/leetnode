@@ -79,15 +79,44 @@ function CopyButton({ text }: { text: string }) {
       title="Copy to clipboard"
       style={{
         position: 'absolute', top: 8, right: 8,
-        background: copied ? 'rgba(34,197,94,0.12)' : 'rgba(255,255,255,0.05)',
-        border: `1px solid ${copied ? 'rgba(34,197,94,0.3)' : 'rgba(255,255,255,0.08)'}`,
-        borderRadius: 4, color: copied ? '#4ade80' : 'rgba(255,255,255,0.35)',
+        background: copied ? 'rgba(34,197,94,0.15)' : 'rgba(99,102,241,0.12)',
+        border: `1px solid ${copied ? 'rgba(34,197,94,0.35)' : 'rgba(99,102,241,0.25)'}`,
+        borderRadius: 5,
+        color: copied ? '#4ade80' : '#a5b4fc',
         cursor: 'pointer', fontSize: 10, fontFamily: 'monospace',
-        padding: '2px 7px', transition: 'all 0.15s',
+        padding: '3px 8px', transition: 'all 0.15s',
+        display: 'flex', alignItems: 'center', gap: 4, fontWeight: 500,
       }}
-      onMouseEnter={e => { if (!copied) (e.currentTarget as HTMLElement).style.color = '#d4d4d4'; }}
-      onMouseLeave={e => { if (!copied) (e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.35)'; }}>
-      {copied ? '✓ copied' : 'copy'}
+      onMouseEnter={e => {
+        if (!copied) {
+          (e.currentTarget as HTMLElement).style.background = 'rgba(99,102,241,0.22)';
+          (e.currentTarget as HTMLElement).style.borderColor = 'rgba(99,102,241,0.45)';
+          (e.currentTarget as HTMLElement).style.color = '#c4b5fd';
+        }
+      }}
+      onMouseLeave={e => {
+        if (!copied) {
+          (e.currentTarget as HTMLElement).style.background = 'rgba(99,102,241,0.12)';
+          (e.currentTarget as HTMLElement).style.borderColor = 'rgba(99,102,241,0.25)';
+          (e.currentTarget as HTMLElement).style.color = '#a5b4fc';
+        }
+      }}>
+      {copied ? (
+        <>
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+            <path d="M1.5 5.5L3.5 7.5L8.5 2.5" stroke="#4ade80" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          copied
+        </>
+      ) : (
+        <>
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+            <rect x="1" y="3" width="6" height="7" rx="1" stroke="#a5b4fc" strokeWidth="1.2"/>
+            <path d="M3 3V2a1 1 0 011-1h4a1 1 0 011 1v5a1 1 0 01-1 1H7" stroke="#a5b4fc" strokeWidth="1.2"/>
+          </svg>
+          copy
+        </>
+      )}
     </button>
   );
 }
@@ -348,7 +377,21 @@ export default function ProblemPanel({
       </div>
 
       {/* ── Body: description + hints ── */}
-      <div className="flex-1 overflow-y-auto px-6 py-5">
+      {/* user-select:text is explicit here — xterm.js can grab keyboard focus on the
+          right panel; without this, Ctrl+C in the description area can misfire.
+          The onKeyDown handler copies selected text even when xterm holds document focus. */}
+      <div className="flex-1 overflow-y-auto px-6 py-5"
+        style={{ userSelect: 'text', WebkitUserSelect: 'text' } as React.CSSProperties}
+        onKeyDown={e => {
+          // Copy shortcut: works even if xterm.js has document focus
+          if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
+            const sel = window.getSelection()?.toString();
+            if (sel) {
+              e.stopPropagation();
+              navigator.clipboard.writeText(sel).catch(() => {});
+            }
+          }
+        }}>
         <div className="text-sm leading-relaxed" style={{ color: 'var(--text-muted)' }}>
           <ReactMarkdown
             components={{
@@ -371,9 +414,21 @@ export default function ProblemPanel({
               pre: ({ children }) => {
                 const text = extractText(children);
                 return (
-                  <div style={{ position: 'relative' }}>
-                    <pre className="text-xs rounded-lg p-4 overflow-x-auto mb-3 font-mono leading-relaxed"
-                      style={{ background: 'var(--bg-subtle)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}>
+                  <div style={{ position: 'relative', marginBottom: '0.75rem' }}>
+                    <pre style={{
+                      background: 'var(--bg-subtle)',
+                      border: '1px solid var(--border)',
+                      borderRadius: '0.5rem',
+                      padding: '0.875rem 1rem',
+                      paddingRight: '4.5rem', /* room for copy button */
+                      overflowX: 'auto',
+                      fontSize: '0.75rem',
+                      fontFamily: '"JetBrains Mono","Fira Code","Cascadia Code",Menlo,monospace',
+                      lineHeight: 1.7,
+                      color: 'var(--text-secondary)',
+                      userSelect: 'text',
+                      WebkitUserSelect: 'text',
+                    } as React.CSSProperties}>
                       {children}
                     </pre>
                     <CopyButton text={text} />
